@@ -1,0 +1,184 @@
+# Comprehensive Cursor Rules for Development Projects
+
+---
+description: Unified development guidelines for Go backend and Vuetify frontend projects
+globs: "*"
+alwaysApply: true
+---
+
+# Project Context and Architecture
+
+SYSTEM_CONTEXT: |
+  Required file reads on startup:
+#  - docs/architecture.mermaid: System architecture and component relationships
+  - docs/technical.md: Technical specifications and patterns
+  - docs/tasks.md: Current development tasks and requirements
+  - docs/core.md: Core functionality and requirements
+  - docs/status.md: Project progress and state 
+
+  Before making any changes:
+  1. Parse and understand system architecture from docs/architecture.mermaid
+  2. Check current task context from tasks/tasks.md
+  3. Update progress in docs/status.md
+  4. Follow technical specifications from docs/technical.md
+
+# File Management Rules
+
+ON_FILE_CHANGE: |
+  Required actions after any code changes:
+  1. READ architecture documentation to verify architectural compliance
+  2. UPDATE status documentation with:
+     - Current progress
+     - Any new issues encountered
+     - Completed items
+  3. VALIDATE changes against technical specifications
+  4. VERIFY task progress against task list
+
+# General Development Guidelines
+
+DEVELOPMENT_PRINCIPLES: |
+  - Write code that accounts for different environments: dev, test, and prod
+  - Always look for existing code to iterate on instead of creating new code
+  - Do not drastically change patterns before trying to iterate on existing ones
+  - Avoid duplication of code by checking for similar functionality elsewhere
+  - When fixing issues, exhaust all options within existing implementation before introducing new patterns
+  - Write thorough tests for all major functionality
+  - Never add stubbing or fake data for dev/prod environments (only for tests)
+  - Document component fields, types, and dependencies
+  - Reuse functions from store/db/repo.go and will confirm with you before making any database changes.
+
+# Code Style and Patterns
+
+CODING_GUIDELINES: |
+  ## Go Backend
+  - Follow Go standard formatting (gofmt)
+  - Use meaningful error messages with proper error handling
+  - Favor composition over inheritance
+  - Use interfaces for modularity and testability
+  - Follow idiomatic Go conventions for naming and structure
+  - Use context for request cancellation and timeouts
+  - Apply concurrency patterns appropriately (goroutines, channels)
+  - Document public APIs with godoc-style comments
+
+  ## Vuetify Frontend
+  - Follow Vue single-file component structure
+  - Use Vuetify components consistently
+  - Maintain proper component hierarchy
+  - Use Vuex for state management with proper module organization
+  - Apply Vue lifecycle hooks appropriately
+  - Follow Vue style guide priorities (essential, strongly recommended, recommended)
+  - Keep components focused on single responsibilities
+  - Use mixins and composables for shared functionality
+
+# Naming Conventions
+
+NAMING_CONVENTIONS: |
+  ## Go Backend
+  - PascalCase: Exported identifiers (types, functions, constants)
+  - camelCase: Unexported identifiers
+  - snake_case: File names
+  - Acronyms: Keep consistent capitalization (e.g., HTTP, URL, ID)
+  - Test functions: Prefix with Test (e.g., TestFunctionName)
+
+  ## Vuetify/Vue Frontend
+  - PascalCase: Component names, interfaces, types
+  - camelCase: Variables, methods, properties, instances
+  - kebab-case: Component filenames, custom events
+  - UPPER_SNAKE_CASE: Constants, store mutations
+
+# Architecture Understanding
+
+ARCHITECTURE_GUIDELINES: |
+  Required parsing:
+  1. Load and understand complete architecture documentation
+  2. Extract and understand:
+     - Go service boundaries and API contracts
+     - Vue component hierarchy and data flow
+     - System interfaces and integration points
+     - Frontend-backend communication patterns
+  3. Validate changes against architectural constraints
+  4. Ensure new code maintains defined separation of concerns
+
+# Task Management
+
+TASK_WORKFLOW: |
+  Workflow steps:
+  1. READ task requirements:
+     - Parse current task requirements
+     - Extract acceptance criteria
+     - Identify dependencies
+  
+  2. VALIDATE against architecture:
+     - Confirm architectural alignment
+     - Check component interactions
+  
+  3. UPDATE status tracking:
+     - Mark task as in-progress
+     - Track completion of sub-tasks
+     - Document any blockers
+  
+  4. IMPLEMENT following TDD:
+     - Create test files first
+     - Implement to pass tests
+     - Update status on test completion
+
+# Error Prevention
+
+VALIDATION_RULES: |
+  ## Go Backend
+  1. Properly handle and propagate errors
+  2. Validate input parameters at API boundaries
+  3. Use proper error types and error wrapping
+  4. Implement appropriate logging levels
+  5. Add context to errors for better debugging
+  6. Test edge cases thoroughly
+
+  ## Vuetify Frontend
+  1. Validate form inputs with appropriate rules
+  2. Handle API error responses gracefully
+  3. Implement loading states for asynchronous operations
+  4. Use Vue prop validation
+  5. Handle edge cases in component interactions
+  6. Implement proper error boundaries
+
+# Performance Optimization
+
+PERFORMANCE_PATTERNS: |
+  ## Go Backend
+  - Use efficient data structures for the use case
+  - Properly manage database connections
+  - Implement caching where appropriate
+  - Optimize database queries
+  - Use connection pooling
+  - Implement proper context cancellation
+  - Profile and benchmark performance-critical code
+
+  ## Vuetify Frontend
+  - Use v-if and v-show appropriately
+  - Implement lazy loading for routes and components
+  - Use computed properties for derived data
+  - Apply proper key usage in v-for loops
+  - Optimize asset loading and bundling
+  - Use Web Workers for CPU-intensive tasks
+  - Implement pagination for large datasets
+
+# Testing
+
+TESTING_GUIDELINES: |
+  ## Go Backend
+  - Write unit tests for all public methods
+  - Use table-driven tests for comprehensive coverage
+  - Implement integration tests for API endpoints
+  - Mock external dependencies properly
+  - Test error conditions explicitly
+  - Use benchmarks for performance-critical code
+  - Run tests with race detection
+
+  ## Vuetify Frontend
+  - Use Vue Test Utils for component testing
+  - Test component props, events, and slots
+  - Mock Vuex store when testing components
+  - Test Vuex actions and mutations separately
+  - Implement E2E tests for critical user flows
+  - Ensure proper cleanup in test teardown
+  - Test responsive behavior

@@ -1,0 +1,1503 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Document APIs",
+        "contact": {}
+    },
+    "paths": {
+        "/auth/v1/change-password": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Change Password",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.AuthChangePasswordData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/auth/v1/flush-cache": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Flush Cache",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/auth/v1/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.AuthLoginData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.AuthTokenDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/v1/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logout",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/auth/v1/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Get Me",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.AuthSessionDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/v1/refresh-token": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Refresh Token",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.AuthRefreshTokenData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.AuthTokenDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/v1/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.AuthRegisterData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/cms/v1/auditlogs": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Cms"
+                ],
+                "summary": "List Audit Logs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "domain_id",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 10,
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "created_at.desc",
+                        "name": "sorts",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.AuditLogCmsDto"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/v1/clients": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Cms"
+                ],
+                "summary": "List Clients",
+                "parameters": [
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 10,
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "created_at.desc",
+                        "name": "sorts",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.ClientCmsDto"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Cms"
+                ],
+                "summary": "Create Client",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.ClientCmsData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.ClientCmsDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/v1/clients/{client_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Cms"
+                ],
+                "summary": "Delete Client",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "client_id",
+                        "name": "client_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.ClientCmsDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/v1/roles": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Cms"
+                ],
+                "summary": "List Roles",
+                "parameters": [
+                    {
+                        "enum": [
+                            "enable",
+                            "disable"
+                        ],
+                        "type": "string",
+                        "x-enum-varnames": [
+                            "DataStatusEnable",
+                            "DataStatusDisable"
+                        ],
+                        "name": "data_status",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 10,
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "created_at.desc",
+                        "name": "sorts",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.RoleCmsDto"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Cms"
+                ],
+                "summary": "Create Role",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.RoleCmsData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.RoleCmsDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/v1/roles/{role_id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Cms"
+                ],
+                "summary": "Update Role",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "role_id",
+                        "name": "role_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.RoleCmsData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.RoleCmsDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/v1/tenants": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Cms"
+                ],
+                "summary": "List Tenants",
+                "parameters": [
+                    {
+                        "enum": [
+                            "enable",
+                            "disable"
+                        ],
+                        "type": "string",
+                        "x-enum-varnames": [
+                            "DataStatusEnable",
+                            "DataStatusDisable"
+                        ],
+                        "name": "data_status",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 10,
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "created_at.desc",
+                        "name": "sorts",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.TenantCmsDto"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Cms"
+                ],
+                "summary": "Create Tenant",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.TenantCmsData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.TenantCmsDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/v1/tenants/{tenant_id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Cms"
+                ],
+                "summary": "Update Tenant",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "tenant_id",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.TenantCmsData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.TenantCmsDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/v1/tenants/{tenant_id}/reset-password": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Cms"
+                ],
+                "summary": "Reset Password For Tenant",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "tenant_id",
+                        "name": "tenant_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.TenantCmsDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/v1/users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Cms"
+                ],
+                "summary": "List Users",
+                "parameters": [
+                    {
+                        "enum": [
+                            "enable",
+                            "disable"
+                        ],
+                        "type": "string",
+                        "x-enum-varnames": [
+                            "DataStatusEnable",
+                            "DataStatusDisable"
+                        ],
+                        "name": "data_status",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 10,
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "role_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "created_at.desc",
+                        "name": "sorts",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.UserCmsDto"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Cms"
+                ],
+                "summary": "Create User",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.UserCmsData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.UserCmsDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/v1/users/{user_id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Cms"
+                ],
+                "summary": "Update User",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "user_id",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.UserCmsData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.UserCmsDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/v1/users/{user_id}/reset-password": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Cms"
+                ],
+                "summary": "Reset Password For User",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "user_id",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.UserCmsDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/rest/v1/metas": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Rest"
+                ],
+                "summary": "Get Metas",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storage/v1/images": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Upload Image",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "files",
+                        "name": "files",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/storage/v1/images/{filename}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Download Image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "filename",
+                        "name": "filename",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/storage/v1/videos": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Upload Video",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "files",
+                        "name": "files",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/storage/v1/videos/{filename}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Download Video",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "filename",
+                        "name": "filename",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/webhook/v1": {
+            "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "tags": [
+                    "Webhook"
+                ],
+                "summary": "Webhook",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.M"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.M"
+                        }
+                    }
+                }
+            }
+        },
+        "/websocket/v1": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Websocket"
+                ],
+                "summary": "Websocket",
+                "responses": {
+                    "101": {
+                        "description": "Switching Protocols"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "db.AuditLogCmsDto": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "$ref": "#/definitions/enum.DataAction"
+                },
+                "data": {
+                    "$ref": "#/definitions/db.M"
+                },
+                "domain_id": {
+                    "type": "string",
+                    "example": "654db9eca1f1b1bdbf3d4617"
+                },
+                "log_id": {
+                    "type": "string",
+                    "example": "812db9eca1f1b1bdbf3d4617"
+                },
+                "method": {
+                    "type": "string",
+                    "example": "GET"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Role"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2006-01-02T03:04:05Z"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "example": "editor"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "/v1/cms/roles"
+                }
+            }
+        },
+        "db.AuthChangePasswordData": {
+            "type": "object",
+            "required": [
+                "new_password",
+                "old_password"
+            ],
+            "properties": {
+                "new_password": {
+                    "type": "string"
+                },
+                "old_password": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.AuthLoginData": {
+            "type": "object",
+            "required": [
+                "keycode",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "keycode": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.AuthRefreshTokenData": {
+            "type": "object",
+            "required": [
+                "keycode",
+                "refresh_token",
+                "username"
+            ],
+            "properties": {
+                "keycode": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.AuthRegisterData": {
+            "type": "object",
+            "required": [
+                "keycode",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "keycode": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.AuthSessionDto": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "is_root": {
+                    "type": "boolean"
+                },
+                "is_tenant": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/enum.Permission"
+                    }
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.AuthTokenDto": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "expires_in": {
+                    "type": "integer"
+                },
+                "refresh_token": {
+                    "type": "string"
+                },
+                "token_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.ClientCmsData": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "Aloha"
+                }
+            }
+        },
+        "db.ClientCmsDto": {
+            "type": "object",
+            "properties": {
+                "client_id": {
+                    "type": "string",
+                    "example": "ogy64Ji1E4VY0S8b99oGDlDCRk5ZO3"
+                },
+                "client_secret": {
+                    "type": "string",
+                    "example": "oSAa14Q1Ne6iSqVLs4nfG7p12K6cyv67PyV3L509"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Aloha"
+                },
+                "secure_key": {
+                    "type": "string",
+                    "example": "QX9f276HW4fyL38Jto0pi9WVa40yLRpW0jsKN033"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2006-01-02T03:04:05Z"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "example": "editor"
+                }
+            }
+        },
+        "db.M": {
+            "type": "object",
+            "additionalProperties": {}
+        },
+        "db.RoleCmsData": {
+            "type": "object",
+            "required": [
+                "data_status",
+                "name",
+                "permissions"
+            ],
+            "properties": {
+                "data_status": {
+                    "$ref": "#/definitions/enum.DataStatus"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Aloha"
+                },
+                "permissions": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/enum.Permission"
+                    }
+                }
+            }
+        },
+        "db.RoleCmsDto": {
+            "type": "object",
+            "properties": {
+                "data_status": {
+                    "$ref": "#/definitions/enum.DataStatus"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Aloha"
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/enum.Permission"
+                    }
+                },
+                "role_id": {
+                    "type": "string",
+                    "example": "671db9eca1f1b1bdbf3d4617"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2006-01-02T03:04:05Z"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "example": "editor"
+                }
+            }
+        },
+        "db.TenantCmsData": {
+            "type": "object",
+            "required": [
+                "address",
+                "data_status",
+                "email",
+                "keycode",
+                "name",
+                "phone",
+                "username"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "Aloha City"
+                },
+                "data_status": {
+                    "$ref": "#/definitions/enum.DataStatus"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "aloha@email.com"
+                },
+                "keycode": {
+                    "type": "string",
+                    "example": "aloha"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Aloha"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "0973123456"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "aloha"
+                }
+            }
+        },
+        "db.TenantCmsDto": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "Aloha City"
+                },
+                "data_status": {
+                    "$ref": "#/definitions/enum.DataStatus"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "aloha@email.com"
+                },
+                "keycode": {
+                    "type": "string",
+                    "example": "aloha"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Aloha"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "0973123456"
+                },
+                "tenant_id": {
+                    "type": "string",
+                    "example": "671dfc49f06ba89b1811cc5a"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2006-01-02T03:04:05Z"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "example": "editor"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "aloha"
+                }
+            }
+        },
+        "db.UserCmsData": {
+            "type": "object",
+            "required": [
+                "data_status",
+                "email",
+                "name",
+                "phone",
+                "role_ids",
+                "username"
+            ],
+            "properties": {
+                "data_status": {
+                    "$ref": "#/definitions/enum.DataStatus"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "aloha@email.com"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Aloha"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "0973123456"
+                },
+                "role_ids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "671db9eca1f1b1bdbf3d4617"
+                    ]
+                },
+                "username": {
+                    "type": "string",
+                    "example": "aloha"
+                }
+            }
+        },
+        "db.UserCmsDto": {
+            "type": "object",
+            "properties": {
+                "data_status": {
+                    "$ref": "#/definitions/enum.DataStatus"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "aloha@email.com"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Aloha"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "0973123456"
+                },
+                "role_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "671db9eca1f1b1bdbf3d4617"
+                    ]
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2006-01-02T03:04:05Z"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "example": "editor"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "671db9eca1f1b1bdbf3d4618"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "aloha"
+                }
+            }
+        },
+        "enum.DataAction": {
+            "type": "string",
+            "enum": [
+                "create",
+                "update",
+                "delete",
+                "reset_password"
+            ],
+            "x-enum-varnames": [
+                "DataActionCreate",
+                "DataActionUpdate",
+                "DataActionDelete",
+                "DataActionResetPassword"
+            ]
+        },
+        "enum.DataStatus": {
+            "type": "string",
+            "enum": [
+                "enable",
+                "disable"
+            ],
+            "x-enum-varnames": [
+                "DataStatusEnable",
+                "DataStatusDisable"
+            ]
+        },
+        "enum.Permission": {
+            "type": "string",
+            "enum": [
+                "system_setting",
+                "system_audit_log",
+                "client_view",
+                "client_create",
+                "client_delete",
+                "role_view",
+                "role_create",
+                "role_update",
+                "user_view",
+                "user_create",
+                "user_update",
+                "tenant_view",
+                "tenant_create",
+                "tenant_update"
+            ],
+            "x-enum-varnames": [
+                "PermissionSystemSetting",
+                "PermissionSystemAuditLog",
+                "PermissionClientView",
+                "PermissionClientCreate",
+                "PermissionClientDelete",
+                "PermissionRoleView",
+                "PermissionRoleCreate",
+                "PermissionRoleUpdate",
+                "PermissionUserView",
+                "PermissionUserCreate",
+                "PermissionUserUpdate",
+                "PermissionTenantView",
+                "PermissionTenantCreate",
+                "PermissionTenantUpdate"
+            ]
+        }
+    },
+    "securityDefinitions": {
+        "BasicAuth": {
+            "type": "basic"
+        },
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "Header"
+        }
+    }
+}

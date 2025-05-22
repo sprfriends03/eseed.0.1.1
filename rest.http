@@ -1,0 +1,37 @@
+@host = http://localhost:3000
+@token = {{login.response.body.access_token}}
+@page = 1
+@limit = 1
+
+###
+# @name login
+POST {{host}}/auth/v1/login
+Content-Type: application/json
+
+{
+    "username": "eseed",
+    "password": "eseed",
+    "keycode": "eseed"
+}
+
+###
+GET {{host}}/auth/v1/me
+Authorization: Bearer {{token}}
+
+###
+GET {{host}}/cms/v1/roles?page={{page}}&limit={{limit}}
+Authorization: Bearer {{token}}
+
+###
+POST {{host}}/cms/v1/roles
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "data_status": "enable",
+  "name": "Aloha",
+  "permissions": [
+    "system_setting"
+  ]
+}
+

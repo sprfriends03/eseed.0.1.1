@@ -1,0 +1,9 @@
+services:
+  vuedemo:
+    build: .
+    image: vuedemo
+    hostname: vuedemo
+    container_name: vuedemo
+    restart: always
+    ports:
+      - 8080:80

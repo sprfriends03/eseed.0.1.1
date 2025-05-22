@@ -1,0 +1,982 @@
+definitions:
+  db.AuditLogCmsDto:
+    properties:
+      action:
+        $ref: '#/definitions/enum.DataAction'
+      data:
+        $ref: '#/definitions/db.M'
+      domain_id:
+        example: 654db9eca1f1b1bdbf3d4617
+        type: string
+      log_id:
+        example: 812db9eca1f1b1bdbf3d4617
+        type: string
+      method:
+        example: GET
+        type: string
+      name:
+        example: Role
+        type: string
+      updated_at:
+        example: "2006-01-02T03:04:05Z"
+        type: string
+      updated_by:
+        example: editor
+        type: string
+      url:
+        example: /v1/cms/roles
+        type: string
+    type: object
+  db.AuthChangePasswordData:
+    properties:
+      new_password:
+        type: string
+      old_password:
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
+  db.AuthLoginData:
+    properties:
+      keycode:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - keycode
+    - password
+    - username
+    type: object
+  db.AuthRefreshTokenData:
+    properties:
+      keycode:
+        type: string
+      refresh_token:
+        type: string
+      username:
+        type: string
+    required:
+    - keycode
+    - refresh_token
+    - username
+    type: object
+  db.AuthRegisterData:
+    properties:
+      keycode:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - keycode
+    - password
+    - username
+    type: object
+  db.AuthSessionDto:
+    properties:
+      access_token:
+        type: string
+      email:
+        type: string
+      is_root:
+        type: boolean
+      is_tenant:
+        type: boolean
+      name:
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/enum.Permission'
+        type: array
+      phone:
+        type: string
+      tenant_id:
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  db.AuthTokenDto:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      refresh_token:
+        type: string
+      token_type:
+        type: string
+    type: object
+  db.ClientCmsData:
+    properties:
+      name:
+        example: Aloha
+        type: string
+    required:
+    - name
+    type: object
+  db.ClientCmsDto:
+    properties:
+      client_id:
+        example: ogy64Ji1E4VY0S8b99oGDlDCRk5ZO3
+        type: string
+      client_secret:
+        example: oSAa14Q1Ne6iSqVLs4nfG7p12K6cyv67PyV3L509
+        type: string
+      name:
+        example: Aloha
+        type: string
+      secure_key:
+        example: QX9f276HW4fyL38Jto0pi9WVa40yLRpW0jsKN033
+        type: string
+      updated_at:
+        example: "2006-01-02T03:04:05Z"
+        type: string
+      updated_by:
+        example: editor
+        type: string
+    type: object
+  db.M:
+    additionalProperties: {}
+    type: object
+  db.RoleCmsData:
+    properties:
+      data_status:
+        $ref: '#/definitions/enum.DataStatus'
+      name:
+        example: Aloha
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/enum.Permission'
+        minItems: 1
+        type: array
+    required:
+    - data_status
+    - name
+    - permissions
+    type: object
+  db.RoleCmsDto:
+    properties:
+      data_status:
+        $ref: '#/definitions/enum.DataStatus'
+      name:
+        example: Aloha
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/enum.Permission'
+        type: array
+      role_id:
+        example: 671db9eca1f1b1bdbf3d4617
+        type: string
+      updated_at:
+        example: "2006-01-02T03:04:05Z"
+        type: string
+      updated_by:
+        example: editor
+        type: string
+    type: object
+  db.TenantCmsData:
+    properties:
+      address:
+        example: Aloha City
+        type: string
+      data_status:
+        $ref: '#/definitions/enum.DataStatus'
+      email:
+        example: aloha@email.com
+        type: string
+      keycode:
+        example: aloha
+        type: string
+      name:
+        example: Aloha
+        type: string
+      phone:
+        example: "0973123456"
+        type: string
+      username:
+        example: aloha
+        type: string
+    required:
+    - address
+    - data_status
+    - email
+    - keycode
+    - name
+    - phone
+    - username
+    type: object
+  db.TenantCmsDto:
+    properties:
+      address:
+        example: Aloha City
+        type: string
+      data_status:
+        $ref: '#/definitions/enum.DataStatus'
+      email:
+        example: aloha@email.com
+        type: string
+      keycode:
+        example: aloha
+        type: string
+      name:
+        example: Aloha
+        type: string
+      phone:
+        example: "0973123456"
+        type: string
+      tenant_id:
+        example: 671dfc49f06ba89b1811cc5a
+        type: string
+      updated_at:
+        example: "2006-01-02T03:04:05Z"
+        type: string
+      updated_by:
+        example: editor
+        type: string
+      username:
+        example: aloha
+        type: string
+    type: object
+  db.UserCmsData:
+    properties:
+      data_status:
+        $ref: '#/definitions/enum.DataStatus'
+      email:
+        example: aloha@email.com
+        type: string
+      name:
+        example: Aloha
+        type: string
+      phone:
+        example: "0973123456"
+        type: string
+      role_ids:
+        example:
+        - 671db9eca1f1b1bdbf3d4617
+        items:
+          type: string
+        minItems: 1
+        type: array
+      username:
+        example: aloha
+        type: string
+    required:
+    - data_status
+    - email
+    - name
+    - phone
+    - role_ids
+    - username
+    type: object
+  db.UserCmsDto:
+    properties:
+      data_status:
+        $ref: '#/definitions/enum.DataStatus'
+      email:
+        example: aloha@email.com
+        type: string
+      name:
+        example: Aloha
+        type: string
+      phone:
+        example: "0973123456"
+        type: string
+      role_ids:
+        example:
+        - 671db9eca1f1b1bdbf3d4617
+        items:
+          type: string
+        type: array
+      updated_at:
+        example: "2006-01-02T03:04:05Z"
+        type: string
+      updated_by:
+        example: editor
+        type: string
+      user_id:
+        example: 671db9eca1f1b1bdbf3d4618
+        type: string
+      username:
+        example: aloha
+        type: string
+    type: object
+  enum.DataAction:
+    enum:
+    - create
+    - update
+    - delete
+    - reset_password
+    type: string
+    x-enum-varnames:
+    - DataActionCreate
+    - DataActionUpdate
+    - DataActionDelete
+    - DataActionResetPassword
+  enum.DataStatus:
+    enum:
+    - enable
+    - disable
+    type: string
+    x-enum-varnames:
+    - DataStatusEnable
+    - DataStatusDisable
+  enum.Permission:
+    enum:
+    - system_setting
+    - system_audit_log
+    - client_view
+    - client_create
+    - client_delete
+    - role_view
+    - role_create
+    - role_update
+    - user_view
+    - user_create
+    - user_update
+    - tenant_view
+    - tenant_create
+    - tenant_update
+    type: string
+    x-enum-varnames:
+    - PermissionSystemSetting
+    - PermissionSystemAuditLog
+    - PermissionClientView
+    - PermissionClientCreate
+    - PermissionClientDelete
+    - PermissionRoleView
+    - PermissionRoleCreate
+    - PermissionRoleUpdate
+    - PermissionUserView
+    - PermissionUserCreate
+    - PermissionUserUpdate
+    - PermissionTenantView
+    - PermissionTenantCreate
+    - PermissionTenantUpdate
+info:
+  contact: {}
+  title: Document APIs
+paths:
+  /auth/v1/change-password:
+    post:
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.AuthChangePasswordData'
+      responses:
+        "200":
+          description: OK
+      security:
+      - BearerAuth: []
+      summary: Change Password
+      tags:
+      - Auth
+  /auth/v1/flush-cache:
+    get:
+      responses:
+        "200":
+          description: OK
+      security:
+      - BearerAuth: []
+      summary: Flush Cache
+      tags:
+      - Auth
+  /auth/v1/login:
+    post:
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.AuthLoginData'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.AuthTokenDto'
+      summary: Login
+      tags:
+      - Auth
+  /auth/v1/logout:
+    post:
+      responses:
+        "200":
+          description: OK
+      security:
+      - BearerAuth: []
+      summary: Logout
+      tags:
+      - Auth
+  /auth/v1/me:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.AuthSessionDto'
+      security:
+      - BearerAuth: []
+      summary: Get Me
+      tags:
+      - Auth
+  /auth/v1/refresh-token:
+    post:
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.AuthRefreshTokenData'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.AuthTokenDto'
+      summary: Refresh Token
+      tags:
+      - Auth
+  /auth/v1/register:
+    post:
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.AuthRegisterData'
+      responses:
+        "200":
+          description: OK
+      summary: Register
+      tags:
+      - Auth
+  /cms/v1/auditlogs:
+    get:
+      parameters:
+      - in: query
+        name: domain_id
+        type: string
+      - default: 10
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        required: true
+        type: integer
+      - in: query
+        name: name
+        type: string
+      - default: 1
+        in: query
+        minimum: 1
+        name: page
+        required: true
+        type: integer
+      - in: query
+        name: search
+        type: string
+      - default: created_at.desc
+        in: query
+        name: sorts
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/db.AuditLogCmsDto'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List Audit Logs
+      tags:
+      - Cms
+  /cms/v1/clients:
+    get:
+      parameters:
+      - default: 10
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        required: true
+        type: integer
+      - default: 1
+        in: query
+        minimum: 1
+        name: page
+        required: true
+        type: integer
+      - in: query
+        name: search
+        type: string
+      - default: created_at.desc
+        in: query
+        name: sorts
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/db.ClientCmsDto'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List Clients
+      tags:
+      - Cms
+    post:
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.ClientCmsData'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.ClientCmsDto'
+      security:
+      - BearerAuth: []
+      summary: Create Client
+      tags:
+      - Cms
+  /cms/v1/clients/{client_id}:
+    delete:
+      parameters:
+      - description: client_id
+        in: path
+        name: client_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.ClientCmsDto'
+      security:
+      - BearerAuth: []
+      summary: Delete Client
+      tags:
+      - Cms
+  /cms/v1/roles:
+    get:
+      parameters:
+      - enum:
+        - enable
+        - disable
+        in: query
+        name: data_status
+        type: string
+        x-enum-varnames:
+        - DataStatusEnable
+        - DataStatusDisable
+      - default: 10
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        required: true
+        type: integer
+      - default: 1
+        in: query
+        minimum: 1
+        name: page
+        required: true
+        type: integer
+      - in: query
+        name: search
+        type: string
+      - default: created_at.desc
+        in: query
+        name: sorts
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/db.RoleCmsDto'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List Roles
+      tags:
+      - Cms
+    post:
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.RoleCmsData'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.RoleCmsDto'
+      security:
+      - BearerAuth: []
+      summary: Create Role
+      tags:
+      - Cms
+  /cms/v1/roles/{role_id}:
+    put:
+      parameters:
+      - description: role_id
+        in: path
+        name: role_id
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.RoleCmsData'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.RoleCmsDto'
+      security:
+      - BearerAuth: []
+      summary: Update Role
+      tags:
+      - Cms
+  /cms/v1/tenants:
+    get:
+      parameters:
+      - enum:
+        - enable
+        - disable
+        in: query
+        name: data_status
+        type: string
+        x-enum-varnames:
+        - DataStatusEnable
+        - DataStatusDisable
+      - default: 10
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        required: true
+        type: integer
+      - default: 1
+        in: query
+        minimum: 1
+        name: page
+        required: true
+        type: integer
+      - in: query
+        name: search
+        type: string
+      - default: created_at.desc
+        in: query
+        name: sorts
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/db.TenantCmsDto'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List Tenants
+      tags:
+      - Cms
+    post:
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.TenantCmsData'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.TenantCmsDto'
+      security:
+      - BearerAuth: []
+      summary: Create Tenant
+      tags:
+      - Cms
+  /cms/v1/tenants/{tenant_id}:
+    put:
+      parameters:
+      - description: tenant_id
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.TenantCmsData'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.TenantCmsDto'
+      security:
+      - BearerAuth: []
+      summary: Update Tenant
+      tags:
+      - Cms
+  /cms/v1/tenants/{tenant_id}/reset-password:
+    post:
+      parameters:
+      - description: tenant_id
+        in: path
+        name: tenant_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.TenantCmsDto'
+      security:
+      - BearerAuth: []
+      summary: Reset Password For Tenant
+      tags:
+      - Cms
+  /cms/v1/users:
+    get:
+      parameters:
+      - enum:
+        - enable
+        - disable
+        in: query
+        name: data_status
+        type: string
+        x-enum-varnames:
+        - DataStatusEnable
+        - DataStatusDisable
+      - default: 10
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        required: true
+        type: integer
+      - default: 1
+        in: query
+        minimum: 1
+        name: page
+        required: true
+        type: integer
+      - in: query
+        name: role_id
+        type: string
+      - in: query
+        name: search
+        type: string
+      - default: created_at.desc
+        in: query
+        name: sorts
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/db.UserCmsDto'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List Users
+      tags:
+      - Cms
+    post:
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.UserCmsData'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.UserCmsDto'
+      security:
+      - BearerAuth: []
+      summary: Create User
+      tags:
+      - Cms
+  /cms/v1/users/{user_id}:
+    put:
+      parameters:
+      - description: user_id
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.UserCmsData'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.UserCmsDto'
+      security:
+      - BearerAuth: []
+      summary: Update User
+      tags:
+      - Cms
+  /cms/v1/users/{user_id}/reset-password:
+    post:
+      parameters:
+      - description: user_id
+        in: path
+        name: user_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.UserCmsDto'
+      security:
+      - BearerAuth: []
+      summary: Reset Password For User
+      tags:
+      - Cms
+  /rest/v1/metas:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                type: string
+              type: array
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Metas
+      tags:
+      - Rest
+  /storage/v1/images:
+    post:
+      parameters:
+      - description: files
+        in: formData
+        name: files
+        required: true
+        type: file
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Upload Image
+      tags:
+      - Storage
+  /storage/v1/images/{filename}:
+    get:
+      parameters:
+      - description: filename
+        in: path
+        name: filename
+        required: true
+        type: string
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Download Image
+      tags:
+      - Storage
+  /storage/v1/videos:
+    post:
+      parameters:
+      - description: files
+        in: formData
+        name: files
+        required: true
+        type: file
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Upload Video
+      tags:
+      - Storage
+  /storage/v1/videos/{filename}:
+    get:
+      parameters:
+      - description: filename
+        in: path
+        name: filename
+        required: true
+        type: string
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Download Video
+      tags:
+      - Storage
+  /webhook/v1:
+    post:
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.M'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.M'
+      security:
+      - BasicAuth: []
+      summary: Webhook
+      tags:
+      - Webhook
+  /websocket/v1:
+    get:
+      responses:
+        "101":
+          description: Switching Protocols
+      security:
+      - BearerAuth: []
+      summary: Websocket
+      tags:
+      - Websocket
+securityDefinitions:
+  BasicAuth:
+    type: basic
+  BearerAuth:
+    in: Header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
