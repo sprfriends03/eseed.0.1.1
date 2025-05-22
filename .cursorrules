@@ -10,17 +10,18 @@ alwaysApply: true
 
 SYSTEM_CONTEXT: |
   Required file reads on startup:
-#  - docs/architecture.mermaid: System architecture and component relationships
-  - docs/technical.md: Technical specifications and patterns
-  - docs/tasks.md: Current development tasks and requirements
-  - docs/core.md: Core functionality and requirements
-  - docs/status.md: Project progress and state 
+  - docs/architecture.md: System architecture and component relationships
+#  - docs/technical.md: Technical specifications and patterns
+  - docs/mvp_tasks.md: Current development tasks and requirements
+  #- docs/core.md: Core functionality and requirements
+- docs/status.md: current tasks progress and state 
+- docs/status.md: Project progress and state 
 
   Before making any changes:
-  1. Parse and understand system architecture from docs/architecture.mermaid
+  1. Parse and understand system architecture from docs/architecture.md
   2. Check current task context from tasks/tasks.md
   3. Update progress in docs/status.md
-  4. Follow technical specifications from docs/technical.md
+  4. Follow technical specifications from docs/architecture.md
 
 # File Management Rules
 
