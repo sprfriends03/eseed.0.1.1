@@ -2,6 +2,7 @@ package db
 
 import (
 	"app/pkg/enum"
+	"app/pkg/validate"
 	"context"
 	"time"
 
@@ -14,19 +15,24 @@ import (
 
 type HarvestDomain struct {
 	BaseDomain         `bson:",inline"`
-	PlantID            *string      `json:"plant_id" bson:"plant_id"`         // Link to Plant
-	MemberID           *string      `json:"member_id" bson:"member_id"`       // Link to Member
-	HarvestDate        time.Time    `json:"harvest_date" bson:"harvest_date"` // When harvested
-	Weight             *float64     `json:"weight" bson:"weight"`             // Weight in grams
-	Quality            *int         `json:"quality" bson:"quality"`           // Quality rating (1-10)
-	Images             *[]string    `json:"images" bson:"images"`             // Images of the harvest
-	Strain             *string      `json:"strain" bson:"strain"`             // Cannabis strain (denormalized from Plant)
-	Status             *string      `json:"status" bson:"status"`             // processing, curing, ready, collected
-	NFTTokenID         *string      `json:"nft_token_id" bson:"nft_token_id"`
-	NFTContractAddress *string      `json:"nft_contract_address" bson:"nft_contract_address"`
-	Notes              *string      `json:"notes" bson:"notes"`
-	CollectionDate     *time.Time   `json:"collection_date" bson:"collection_date"` // When member collected
-	TenantId           *enum.Tenant `json:"tenant_id" bson:"tenant_id"`
+	PlantID            *string      `json:"plant_id" bson:"plant_id" validate:"required,len=24"`     // Link to Plant
+	MemberID           *string      `json:"member_id" bson:"member_id" validate:"required,len=24"`   // Link to Member
+	HarvestDate        time.Time    `json:"harvest_date" bson:"harvest_date" validate:"required"`    // When harvested
+	Weight             *float64     `json:"weight" bson:"weight" validate:"required,gt=0"`           // Weight in grams
+	Quality            *int         `json:"quality" bson:"quality" validate:"required,gte=1,lte=10"` // Quality rating (1-10)
+	Images             *[]string    `json:"images" bson:"images" validate:"omitempty,dive,required"` // Images of the harvest
+	Strain             *string      `json:"strain" bson:"strain" validate:"required"`                // Cannabis strain (denormalized from Plant)
+	Status             *string      `json:"status" bson:"status" validate:"required"`                // processing, curing, ready, collected
+	NFTTokenID         *string      `json:"nft_token_id" bson:"nft_token_id" validate:"omitempty"`
+	NFTContractAddress *string      `json:"nft_contract_address" bson:"nft_contract_address" validate:"omitempty"`
+	Notes              *string      `json:"notes" bson:"notes" validate:"omitempty"`
+	CollectionDate     *time.Time   `json:"collection_date" bson:"collection_date" validate:"omitempty"` // When member collected
+	TenantId           *enum.Tenant `json:"tenant_id" bson:"tenant_id" validate:"required,len=24"`
+}
+
+func (s *HarvestDomain) Validate() error {
+	s.BeforeSave()
+	return validate.New().Validate(s)
 }
 
 type harvest struct {
@@ -65,19 +71,32 @@ func newHarvest(ctx context.Context, collection *mongo.Collection) *harvest {
 	return &harvest{repo: newrepo(collection)}
 }
 
-func (s *harvest) Create(ctx context.Context, domain *HarvestDomain) error {
+func (s *harvest) Save(ctx context.Context, domain *HarvestDomain, opts ...*options.UpdateOptions) (*HarvestDomain, error) {
+	if err := domain.Validate(); err != nil {
+		return nil, err
+	}
+
 	if domain.ID.IsZero() {
 		domain.ID = primitive.NewObjectID()
 	}
-	domain.BeforeSave()
 
-	_, err := s.repo.Save(ctx, domain.ID, domain)
+	id, err := s.repo.Save(ctx, domain.ID, domain, opts...)
+	if err != nil {
+		return nil, err
+	}
+	domain.ID = id
+
+	return s.FindByID(ctx, SID(id))
+}
+
+func (s *harvest) Create(ctx context.Context, domain *HarvestDomain) error {
+	_, err := s.Save(ctx, domain)
 	return err
 }
 
 func (s *harvest) Update(ctx context.Context, id string, domain *HarvestDomain) error {
-	domain.BeforeSave()
-	_, err := s.repo.Save(ctx, OID(id), domain)
+	domain.ID = OID(id)
+	_, err := s.Save(ctx, domain)
 	return err
 }
 

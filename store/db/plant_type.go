@@ -2,6 +2,7 @@ package db
 
 import (
 	"app/pkg/enum"
+	"app/pkg/validate"
 	"context"
 	"time"
 
@@ -15,24 +16,29 @@ import (
 
 type PlantTypeDomain struct {
 	BaseDomain        `bson:",inline"`
-	Name              *string            `json:"name" bson:"name"`
-	Strain            *string            `json:"strain" bson:"strain"`
-	Category          *string            `json:"category" bson:"category"` // indica, sativa, hybrid
-	ThcContent        *float64           `json:"thc_content" bson:"thc_content"`
-	CbdContent        *float64           `json:"cbd_content" bson:"cbd_content"`
-	GrowthDifficulty  *int               `json:"growth_difficulty" bson:"growth_difficulty"` // 1-10 scale
-	AverageYield      *float64           `json:"average_yield" bson:"average_yield"`         // in grams
-	FloweringTime     *int               `json:"flowering_time" bson:"flowering_time"`       // in days
-	GrowthPhases      *[]string          `json:"growth_phases" bson:"growth_phases"`
-	Description       *string            `json:"description" bson:"description"`
-	CareInstructions  *string            `json:"care_instructions" bson:"care_instructions"`
-	Images            *[]string          `json:"images" bson:"images"`
-	SeasonalAvailable *bool              `json:"seasonal_available" bson:"seasonal_available"` // Is this plant seasonal
-	Effects           *[]string          `json:"effects" bson:"effects"`                       // relaxing, energizing, etc.
-	MedicalBenefits   *[]string          `json:"medical_benefits" bson:"medical_benefits"`
-	DataStatus        *enum.DataStatus   `json:"data_status" bson:"data_status"`
-	TenantId          *enum.Tenant       `json:"tenant_id" bson:"tenant_id"`
-	Metadata          *map[string]string `json:"metadata" bson:"metadata"` // Additional flexible metadata
+	Name              *string            `json:"name" bson:"name" validate:"required"`
+	Strain            *string            `json:"strain" bson:"strain" validate:"required"`
+	Category          *string            `json:"category" bson:"category" validate:"required"` // indica, sativa, hybrid
+	ThcContent        *float64           `json:"thc_content" bson:"thc_content" validate:"omitempty,gte=0"`
+	CbdContent        *float64           `json:"cbd_content" bson:"cbd_content" validate:"omitempty,gte=0"`
+	GrowthDifficulty  *int               `json:"growth_difficulty" bson:"growth_difficulty" validate:"omitempty,gte=1,lte=10"` // 1-10 scale
+	AverageYield      *float64           `json:"average_yield" bson:"average_yield" validate:"omitempty,gte=0"`                // in grams
+	FloweringTime     *int               `json:"flowering_time" bson:"flowering_time" validate:"omitempty,gte=0"`              // in days
+	GrowthPhases      *[]string          `json:"growth_phases" bson:"growth_phases" validate:"omitempty,dive,required"`
+	Description       *string            `json:"description" bson:"description" validate:"omitempty"`
+	CareInstructions  *string            `json:"care_instructions" bson:"care_instructions" validate:"omitempty"`
+	Images            *[]string          `json:"images" bson:"images" validate:"omitempty,dive,required"`
+	SeasonalAvailable *bool              `json:"seasonal_available" bson:"seasonal_available" validate:"omitempty"` // Is this plant seasonal
+	Effects           *[]string          `json:"effects" bson:"effects" validate:"omitempty,dive,required"`         // relaxing, energizing, etc.
+	MedicalBenefits   *[]string          `json:"medical_benefits" bson:"medical_benefits" validate:"omitempty,dive,required"`
+	DataStatus        *enum.DataStatus   `json:"data_status" bson:"data_status" validate:"omitempty,data_status"`
+	TenantId          *enum.Tenant       `json:"tenant_id" bson:"tenant_id" validate:"required,len=24"`
+	Metadata          *map[string]string `json:"metadata" bson:"metadata" validate:"omitempty"` // Additional flexible metadata
+}
+
+func (s *PlantTypeDomain) Validate() error {
+	s.BeforeSave()
+	return validate.New().Validate(s)
 }
 
 func (s PlantTypeDomain) BaseDto() *PlantTypeBaseDto {
@@ -197,19 +203,32 @@ func newPlantType(ctx context.Context, collection *mongo.Collection) *plantType 
 	return &plantType{repo: newrepo(collection)}
 }
 
-func (s *plantType) Create(ctx context.Context, domain *PlantTypeDomain) error {
+func (s *plantType) Save(ctx context.Context, domain *PlantTypeDomain, opts ...*options.UpdateOptions) (*PlantTypeDomain, error) {
+	if err := domain.Validate(); err != nil {
+		return nil, err
+	}
+
 	if domain.ID.IsZero() {
 		domain.ID = primitive.NewObjectID()
 	}
-	domain.BeforeSave()
 
-	_, err := s.repo.Save(ctx, domain.ID, domain)
+	id, err := s.repo.Save(ctx, domain.ID, domain, opts...)
+	if err != nil {
+		return nil, err
+	}
+	domain.ID = id
+
+	return s.FindByID(ctx, SID(id))
+}
+
+func (s *plantType) Create(ctx context.Context, domain *PlantTypeDomain) error {
+	_, err := s.Save(ctx, domain)
 	return err
 }
 
 func (s *plantType) Update(ctx context.Context, id string, domain *PlantTypeDomain) error {
-	domain.BeforeSave()
-	_, err := s.repo.Save(ctx, OID(id), domain)
+	domain.ID = OID(id)
+	_, err := s.Save(ctx, domain)
 	return err
 }
 

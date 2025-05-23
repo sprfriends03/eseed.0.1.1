@@ -2,6 +2,7 @@ package db
 
 import (
 	"app/pkg/enum"
+	"app/pkg/validate"
 	"context"
 	"time"
 
@@ -14,18 +15,23 @@ import (
 
 type MembershipDomain struct {
 	BaseDomain     `bson:",inline"`
-	MemberID       *string      `json:"member_id" bson:"member_id"`             // Link to Member
-	MembershipType *string      `json:"membership_type" bson:"membership_type"` // standard, premium, etc.
-	StartDate      *time.Time   `json:"start_date" bson:"start_date"`
-	ExpirationDate *time.Time   `json:"expiration_date" bson:"expiration_date"`
-	Status         *string      `json:"status" bson:"status"`                   // pending_payment, active, expired, canceled
-	AllocatedSlots *int         `json:"allocated_slots" bson:"allocated_slots"` // Number of plant slots
-	UsedSlots      *int         `json:"used_slots" bson:"used_slots"`           // Number of used plant slots
-	PaymentID      *string      `json:"payment_id" bson:"payment_id"`           // Link to Payment
-	PaymentAmount  *float64     `json:"payment_amount" bson:"payment_amount"`
-	PaymentStatus  *string      `json:"payment_status" bson:"payment_status"` // pending, paid, failed
-	AutoRenew      *bool        `json:"auto_renew" bson:"auto_renew"`
-	TenantId       *enum.Tenant `json:"tenant_id" bson:"tenant_id"`
+	MemberID       *string      `json:"member_id" bson:"member_id" validate:"required,len=24"`      // Link to Member
+	MembershipType *string      `json:"membership_type" bson:"membership_type" validate:"required"` // standard, premium, etc.
+	StartDate      *time.Time   `json:"start_date" bson:"start_date" validate:"required"`
+	ExpirationDate *time.Time   `json:"expiration_date" bson:"expiration_date" validate:"required,gtfield=StartDate"`
+	Status         *string      `json:"status" bson:"status" validate:"required"`                         // pending_payment, active, expired, canceled
+	AllocatedSlots *int         `json:"allocated_slots" bson:"allocated_slots" validate:"required,gte=0"` // Number of plant slots
+	UsedSlots      *int         `json:"used_slots" bson:"used_slots" validate:"required,gte=0"`           // Number of used plant slots
+	PaymentID      *string      `json:"payment_id" bson:"payment_id" validate:"omitempty,len=24"`         // Link to Payment
+	PaymentAmount  *float64     `json:"payment_amount" bson:"payment_amount" validate:"required,gte=0"`
+	PaymentStatus  *string      `json:"payment_status" bson:"payment_status" validate:"required"` // pending, paid, failed
+	AutoRenew      *bool        `json:"auto_renew" bson:"auto_renew" validate:"omitempty"`
+	TenantId       *enum.Tenant `json:"tenant_id" bson:"tenant_id" validate:"required,len=24"`
+}
+
+func (s *MembershipDomain) Validate() error {
+	s.BeforeSave()
+	return validate.New().Validate(s)
 }
 
 type membership struct {
@@ -63,19 +69,32 @@ func newMembership(ctx context.Context, collection *mongo.Collection) *membershi
 	return &membership{repo: newrepo(collection)}
 }
 
-func (s *membership) Create(ctx context.Context, domain *MembershipDomain) error {
+func (s *membership) Save(ctx context.Context, domain *MembershipDomain, opts ...*options.UpdateOptions) (*MembershipDomain, error) {
+	if err := domain.Validate(); err != nil {
+		return nil, err
+	}
+
 	if domain.ID.IsZero() {
 		domain.ID = primitive.NewObjectID()
 	}
-	domain.BeforeSave()
 
-	_, err := s.repo.Save(ctx, domain.ID, domain)
+	id, err := s.repo.Save(ctx, domain.ID, domain, opts...)
+	if err != nil {
+		return nil, err
+	}
+	domain.ID = id
+
+	return s.FindByID(ctx, SID(id))
+}
+
+func (s *membership) Create(ctx context.Context, domain *MembershipDomain) error {
+	_, err := s.Save(ctx, domain)
 	return err
 }
 
 func (s *membership) Update(ctx context.Context, id string, domain *MembershipDomain) error {
-	domain.BeforeSave()
-	_, err := s.repo.Save(ctx, OID(id), domain)
+	domain.ID = OID(id)
+	_, err := s.Save(ctx, domain)
 	return err
 }
 
