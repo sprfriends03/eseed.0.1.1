@@ -11,9 +11,18 @@ alwaysApply: true
 SYSTEM_CONTEXT: |
   Required file reads on startup:
   - docs/architecture.md: System architecture and component relationships
+<<<<<<< HEAD
   - docs/tasks.md: Current development tasks and requirements
   - docs/status.md: Project progress and state 
   - docs/mvp_tasks.md: Current Phase MVP development tasks and requirements
+=======
+#  - docs/technical.md: Technical specifications and patterns
+  - docs/mvp_tasks.md: Current development tasks and requirements
+  #- docs/core.md: Core functionality and requirements
+- docs/status.md: current tasks progress and state 
+- docs/status.md: Project progress and state 
+
+>>>>>>> c3a33a93bfb9e30a124fb59728bf1b5fe80bbd45
   Before making any changes:
   1. Parse and understand system architecture from docs/architecture.md
   2. Check current task context from tasks/tasks.md
