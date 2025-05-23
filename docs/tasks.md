@@ -66,10 +66,33 @@
     - [ ] Code style settings
 
 #### 1.1.1.4 Error Handling Framework
-- [ ] Create error types in pkg/ecode
-- [ ] Implement error wrapping
-- [ ] Set up error logging
-- [ ] Create error response helpers
+- [x] Create error types in pkg/ecode
+    - [x] Created domain-specific error codes in cannabis.go
+    - [x] Added documentation for error codes
+- [x] Implement error wrapping
+    - [x] Added WithContext for adding context information
+    - [x] Added WithStack for stack trace information
+    - [x] Added WrapIf for conditional error wrapping
+- [x] Set up error logging
+    - [x] Implemented LogError with severity levels
+    - [x] Added LogErrorWithContext for context-aware logging
+    - [x] Created structured error formatting for logs
+- [x] Create error response helpers
+    - [x] Added WithDesc for convenient error description
+    - [x] Created documentation and examples
+    - [x] Added README.md with best practices
+
+#### 1.1.1.5 Code Refactoring and Optimization
+- [x] Refactor domain files to maximize code reuse
+    - [x] Embedded repo struct in domain types
+    - [x] Standardized MongoDB query patterns
+    - [x] Unified error handling approach
+- [x] Optimize database operations
+    - [x] Refactored PlantType domain
+    - [x] Refactored SeasonalCatalog domain
+    - [x] Refactored Payment domain
+    - [x] Refactored NFTRecord domain
+- [x] Ensure consistent patterns across codebase
 
 ### 1.1.2 MongoDB Configuration
 
@@ -84,64 +107,64 @@
     - [ ] Graceful shutdown
 
 #### 1.1.2.2 Schema Definition
-- [ ] Define collection schemas in store/db:
-    - [ ] Members
-    - [ ] Memberships
-    - [ ] PlantSlots
-    - [ ] Plants
-    - [ ] CareRecords
-    - [ ] Harvests
-    - [ ] SeasonalCatalog
-    - [ ] PlantType
-    - [ ] Payment
-    - [ ] NFTRecord
-- [ ] Create indexes for each collection
-- [ ] Document schema relationships
+- [x] Define collection schemas in store/db:
+    - [x] Members
+    - [x] Memberships
+    - [x] PlantSlots
+    - [x] Plants
+    - [x] CareRecords
+    - [x] Harvests
+    - [x] SeasonalCatalog
+    - [x] PlantType
+    - [x] Payment
+    - [x] NFTRecord
+- [x] Create indexes for each collection
+- [x] Document schema relationships
 
 ### 1.1.3 Redis Setup
 
 #### 1.1.3.1 Redis Configuration
-- [ ] Configure connection pool in store/rdb/index.go:
-    - [ ] Set pool size
-    - [ ] Set timeout values
-    - [ ] Configure retry logic
-- [ ] Implement health checks
-- [ ] Set up error handling
+- [x] Configure connection pool in store/rdb/index.go:
+    - [x] Set pool size
+    - [x] Set timeout values
+    - [x] Configure retry logic
+- [x] Implement health checks
+- [x] Set up error handling
 
 #### 1.1.3.2 Cache Management
-- [ ] Define cache key patterns
-- [ ] Set up TTL policies
-- [ ] Configure invalidation rules
-- [ ] Implement cache helpers
+- [x] Define cache key patterns
+- [x] Set up TTL policies
+- [x] Configure invalidation rules
+- [x] Implement cache helpers
 
 #### 1.1.3.3 Session Handling
-- [ ] Configure session storage
-- [ ] Set up session middleware
-- [ ] Implement session cleanup
+- [x] Configure session storage
+- [x] Set up session middleware
+- [x] Implement session cleanup
 
 ### 1.1.4 MinIO Configuration
 
 #### 1.1.4.1 Storage Setup
-- [ ] Configure MinIO client in store/storage/index.go
-- [ ] Create required buckets:
-    - [ ] profile-images
-    - [ ] documents
-    - [ ] plant-images
-    - [ ] harvest-images
-    - [ ] kyc-documents
-    - [ ] nft-metadata
-- [ ] Set up bucket policies
+- [x] Configure MinIO client in store/storage/index.go
+- [x] Create required buckets:
+    - [x] profile-images
+    - [x] documents
+    - [x] plant-images
+    - [x] harvest-images
+    - [x] kyc-documents
+    - [x] nft-metadata
+- [x] Set up bucket policies
 
 #### 1.1.4.2 Access Control
-- [ ] Configure CORS
-- [ ] Set up bucket policies
-- [ ] Implement access controls
-- [ ] Configure encryption
+- [x] Configure CORS
+- [x] Set up bucket policies
+- [x] Implement access controls
+- [x] Configure encryption
 
 #### 1.1.4.3 Management
-- [ ] Set up lifecycle rules
-- [ ] Configure versioning
-- [ ] Implement backup strategy
+- [x] Set up lifecycle rules
+- [x] Configure versioning
+- [x] Implement backup strategy
 
 ### Testing Framework
 

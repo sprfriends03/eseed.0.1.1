@@ -8,6 +8,13 @@ REPO=ghcr.io/${REPO_USERNAME}
 run:
 	nodemon --exec go run main.go --signal SIGTERM
 
+build:
+	go build -o build/$(APP_NAME) main.go
+
+test:
+	go test ./... -v
+
+
 login:
 	echo ${REPO_SECRET_KEY} | docker login ghcr.io --username ${REPO_USERNAME} --password-stdin
 

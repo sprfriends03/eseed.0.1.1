@@ -28,6 +28,17 @@ func New() *Rdb {
 		logrus.Fatalln("Redis", err)
 	}
 
+	// Configure Redis client with appropriate pool settings
+	opts.PoolSize = 50                  // Maximum number of connections in the pool
+	opts.MinIdleConns = 10              // Minimum number of idle connections maintained in the pool
+	opts.DialTimeout = 5 * time.Second  // Timeout for establishing new connections
+	opts.ReadTimeout = 3 * time.Second  // Timeout for socket reads
+	opts.WriteTimeout = 3 * time.Second // Timeout for socket writes
+	opts.PoolTimeout = 4 * time.Second  // Timeout for getting connection from the pool
+	opts.MaxRetries = 3                 // Maximum number of retries on failed commands
+	opts.MinRetryBackoff = 8 * time.Millisecond
+	opts.MaxRetryBackoff = 512 * time.Millisecond
+
 	client := redis.NewClient(opts)
 
 	if ping := client.Ping(ctx); ping.Err() != nil {

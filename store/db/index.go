@@ -20,13 +20,23 @@ import (
 )
 
 type Db struct {
-	client   *mongo.Client
-	Bucket   *gridfs.Bucket
-	AuditLog *audit_log
-	Client   *client
-	Role     *role
-	Tenant   *tenant
-	User     *user
+	client          *mongo.Client
+	Bucket          *gridfs.Bucket
+	AuditLog        *audit_log
+	Client          *client
+	Role            *role
+	Tenant          *tenant
+	User            *user
+	Member          *member
+	Membership      *membership
+	PlantSlot       *plantSlot
+	Plant           *plant
+	CareRecord      *careRecord
+	Harvest         *harvest
+	PlantType       *plantType
+	SeasonalCatalog *seasonalCatalog
+	Payment         *payment
+	NFTRecord       *nftRecord
 }
 
 func New() *Db {
@@ -60,13 +70,23 @@ func New() *Db {
 	fmt.Printf("Mongo connected %v\n", env.MongoUri)
 
 	db := &Db{
-		client:   client,
-		Bucket:   bucket,
-		AuditLog: newAuditLog(ctx, mongodb.Collection("audit_log")),
-		Client:   newClient(ctx, mongodb.Collection("client")),
-		Role:     newRole(ctx, mongodb.Collection("role")),
-		Tenant:   newTenant(ctx, mongodb.Collection("tenant")),
-		User:     newUser(ctx, mongodb.Collection("user")),
+		client:          client,
+		Bucket:          bucket,
+		AuditLog:        newAuditLog(ctx, mongodb.Collection("audit_log")),
+		Client:          newClient(ctx, mongodb.Collection("client")),
+		Role:            newRole(ctx, mongodb.Collection("role")),
+		Tenant:          newTenant(ctx, mongodb.Collection("tenant")),
+		User:            newUser(ctx, mongodb.Collection("user")),
+		Member:          newMember(ctx, mongodb.Collection("member")),
+		Membership:      newMembership(ctx, mongodb.Collection("membership")),
+		PlantSlot:       newPlantSlot(ctx, mongodb.Collection("plant_slot")),
+		Plant:           newPlant(ctx, mongodb.Collection("plant")),
+		CareRecord:      newCareRecord(ctx, mongodb.Collection("care_record")),
+		Harvest:         newHarvest(ctx, mongodb.Collection("harvest")),
+		PlantType:       newPlantType(ctx, mongodb.Collection("plant_type")),
+		SeasonalCatalog: newSeasonalCatalog(ctx, mongodb.Collection("seasonal_catalog")),
+		Payment:         newPayment(ctx, mongodb.Collection("payment")),
+		NFTRecord:       newNFTRecord(ctx, mongodb.Collection("nft_record")),
 	}
 
 	return db.initialize(ctx)
