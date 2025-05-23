@@ -10,17 +10,15 @@ alwaysApply: true
 
 SYSTEM_CONTEXT: |
   Required file reads on startup:
-#  - docs/architecture.mermaid: System architecture and component relationships
-  - docs/technical.md: Technical specifications and patterns
+  - docs/architecture.md: System architecture and component relationships
   - docs/tasks.md: Current development tasks and requirements
-  - docs/core.md: Core functionality and requirements
   - docs/status.md: Project progress and state 
-
+  - docs/mvp_tasks.md: Current Phase MVP development tasks and requirements
   Before making any changes:
-  1. Parse and understand system architecture from docs/architecture.mermaid
+  1. Parse and understand system architecture from docs/architecture.md
   2. Check current task context from tasks/tasks.md
   3. Update progress in docs/status.md
-  4. Follow technical specifications from docs/technical.md
+  4. Follow technical specifications from docs/architecture.md
 
 # File Management Rules
 
@@ -46,6 +44,7 @@ DEVELOPMENT_PRINCIPLES: |
   - Never add stubbing or fake data for dev/prod environments (only for tests)
   - Document component fields, types, and dependencies
   - Reuse functions from store/db/repo.go and will confirm with you before making any database changes.
+  The routes are directly defined in the route/ directory with version prefixes in the route registration (e.g., /auth/v1, /storage/v1, etc.)
 
 # Code Style and Patterns
 
