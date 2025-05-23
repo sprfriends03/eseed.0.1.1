@@ -29,7 +29,7 @@ type MembershipDomain struct {
 }
 
 type membership struct {
-	collection *mongo.Collection
+	repo *repo
 }
 
 func newMembership(ctx context.Context, collection *mongo.Collection) *membership {
@@ -60,7 +60,7 @@ func newMembership(ctx context.Context, collection *mongo.Collection) *membershi
 		logrus.Errorln("Failed to create membership indexes:", err)
 	}
 
-	return &membership{collection}
+	return &membership{repo: newrepo(collection)}
 }
 
 func (s *membership) Create(ctx context.Context, domain *MembershipDomain) error {
@@ -69,24 +69,19 @@ func (s *membership) Create(ctx context.Context, domain *MembershipDomain) error
 	}
 	domain.BeforeSave()
 
-	_, err := s.collection.InsertOne(ctx, domain)
+	_, err := s.repo.Save(ctx, domain.ID, domain)
 	return err
 }
 
 func (s *membership) Update(ctx context.Context, id string, domain *MembershipDomain) error {
 	domain.BeforeSave()
-
-	_, err := s.collection.UpdateOne(ctx,
-		bson.M{"_id": OID(id)},
-		bson.M{"$set": domain},
-	)
-
+	_, err := s.repo.Save(ctx, OID(id), domain)
 	return err
 }
 
 func (s *membership) FindByID(ctx context.Context, id string) (*MembershipDomain, error) {
 	var domain MembershipDomain
-	err := s.collection.FindOne(ctx, bson.M{"_id": OID(id)}).Decode(&domain)
+	err := s.repo.FindOne(ctx, M{"_id": OID(id)}, &domain)
 	if err != nil {
 		return nil, err
 	}
@@ -97,12 +92,13 @@ func (s *membership) FindActiveByMemberID(ctx context.Context, memberID string) 
 	var domain MembershipDomain
 	now := time.Now()
 
-	err := s.collection.FindOne(ctx, bson.M{
+	filter := M{
 		"member_id":       memberID,
 		"status":          "active",
-		"expiration_date": bson.M{"$gt": now},
-	}).Decode(&domain)
+		"expiration_date": M{"$gt": now},
+	}
 
+	err := s.repo.FindOne(ctx, filter, &domain)
 	if err != nil {
 		return nil, err
 	}
@@ -113,22 +109,11 @@ func (s *membership) FindByMemberID(ctx context.Context, memberID string) ([]*Me
 	var domains []*MembershipDomain
 
 	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
-
-	cur, err := s.collection.Find(ctx,
-		bson.M{"member_id": memberID},
-		opts,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-	defer cur.Close(ctx)
-
-	if err := cur.All(ctx, &domains); err != nil {
-		return nil, err
+	query := Query{
+		Filter: M{"member_id": memberID},
 	}
 
-	return domains, nil
+	return domains, s.repo.FindAll(ctx, query, &domains, opts)
 }
 
 func (s *membership) FindExpiringSoon(ctx context.Context, daysThreshold int, tenantID enum.Tenant) ([]*MembershipDomain, error) {
@@ -136,60 +121,46 @@ func (s *membership) FindExpiringSoon(ctx context.Context, daysThreshold int, te
 
 	thresholdDate := time.Now().AddDate(0, 0, daysThreshold)
 
-	cur, err := s.collection.Find(ctx, bson.M{
-		"status":    "active",
-		"tenant_id": tenantID,
-		"expiration_date": bson.M{
-			"$gt": time.Now(),
-			"$lt": thresholdDate,
+	query := Query{
+		Filter: M{
+			"status":    "active",
+			"tenant_id": tenantID,
+			"expiration_date": M{
+				"$gt": time.Now(),
+				"$lt": thresholdDate,
+			},
+			"auto_renew": false,
 		},
-		"auto_renew": false,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	defer cur.Close(ctx)
-
-	if err := cur.All(ctx, &domains); err != nil {
-		return nil, err
 	}
 
-	return domains, nil
+	return domains, s.repo.FindAll(ctx, query, &domains)
 }
 
 func (s *membership) IncrementUsedSlots(ctx context.Context, id string) error {
-	_, err := s.collection.UpdateOne(ctx,
-		bson.M{"_id": OID(id)},
-		bson.M{"$inc": bson.M{"used_slots": 1}},
+	return s.repo.UpdateOne(ctx,
+		M{"_id": OID(id)},
+		M{"$inc": M{"used_slots": 1}},
 	)
-
-	return err
 }
 
 func (s *membership) DecrementUsedSlots(ctx context.Context, id string) error {
-	_, err := s.collection.UpdateOne(ctx,
-		bson.M{"_id": OID(id)},
-		bson.M{"$inc": bson.M{"used_slots": -1}},
+	return s.repo.UpdateOne(ctx,
+		M{"_id": OID(id)},
+		M{"$inc": M{"used_slots": -1}},
 	)
-
-	return err
 }
 
 func (s *membership) UpdateStatus(ctx context.Context, id string, status string) error {
-	_, err := s.collection.UpdateOne(ctx,
-		bson.M{"_id": OID(id)},
-		bson.M{"$set": bson.M{"status": status, "updated_at": time.Now()}},
+	return s.repo.UpdateOne(ctx,
+		M{"_id": OID(id)},
+		M{"$set": M{"status": status, "updated_at": time.Now()}},
 	)
-
-	return err
 }
 
 func (s *membership) Delete(ctx context.Context, id string) error {
-	_, err := s.collection.DeleteOne(ctx, bson.M{"_id": OID(id)})
-	return err
+	return s.repo.DeleteOne(ctx, M{"_id": OID(id)})
 }
 
-func (s *membership) Count(ctx context.Context, filter bson.M) (int64, error) {
-	return s.collection.CountDocuments(ctx, filter)
+func (s *membership) Count(ctx context.Context, filter M) (int64, error) {
+	return s.repo.CountDocuments(ctx, Query{Filter: filter}), nil
 }

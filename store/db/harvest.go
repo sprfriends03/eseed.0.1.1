@@ -30,7 +30,7 @@ type HarvestDomain struct {
 }
 
 type harvest struct {
-	collection *mongo.Collection
+	repo *repo
 }
 
 func newHarvest(ctx context.Context, collection *mongo.Collection) *harvest {
@@ -62,7 +62,7 @@ func newHarvest(ctx context.Context, collection *mongo.Collection) *harvest {
 		logrus.Errorln("Failed to create harvest indexes:", err)
 	}
 
-	return &harvest{collection}
+	return &harvest{repo: newrepo(collection)}
 }
 
 func (s *harvest) Create(ctx context.Context, domain *HarvestDomain) error {
@@ -71,24 +71,19 @@ func (s *harvest) Create(ctx context.Context, domain *HarvestDomain) error {
 	}
 	domain.BeforeSave()
 
-	_, err := s.collection.InsertOne(ctx, domain)
+	_, err := s.repo.Save(ctx, domain.ID, domain)
 	return err
 }
 
 func (s *harvest) Update(ctx context.Context, id string, domain *HarvestDomain) error {
 	domain.BeforeSave()
-
-	_, err := s.collection.UpdateOne(ctx,
-		bson.M{"_id": OID(id)},
-		bson.M{"$set": domain},
-	)
-
+	_, err := s.repo.Save(ctx, OID(id), domain)
 	return err
 }
 
 func (s *harvest) FindByID(ctx context.Context, id string) (*HarvestDomain, error) {
 	var domain HarvestDomain
-	err := s.collection.FindOne(ctx, bson.M{"_id": OID(id)}).Decode(&domain)
+	err := s.repo.FindOne(ctx, M{"_id": OID(id)}, &domain)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +92,7 @@ func (s *harvest) FindByID(ctx context.Context, id string) (*HarvestDomain, erro
 
 func (s *harvest) FindByPlantID(ctx context.Context, plantID string) (*HarvestDomain, error) {
 	var domain HarvestDomain
-	err := s.collection.FindOne(ctx, bson.M{"plant_id": plantID}).Decode(&domain)
+	err := s.repo.FindOne(ctx, M{"plant_id": plantID}, &domain)
 	if err != nil {
 		return nil, err
 	}
@@ -112,95 +107,66 @@ func (s *harvest) FindByMemberID(ctx context.Context, memberID string, offset, l
 		SetLimit(limit).
 		SetSort(bson.D{{Key: "harvest_date", Value: -1}})
 
-	cur, err := s.collection.Find(ctx,
-		bson.M{"member_id": memberID},
-		opts,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-	defer cur.Close(ctx)
-
-	if err := cur.All(ctx, &domains); err != nil {
-		return nil, err
+	query := Query{
+		Filter: M{"member_id": memberID},
 	}
 
-	return domains, nil
+	return domains, s.repo.FindAll(ctx, query, &domains, opts)
 }
 
 func (s *harvest) FindByStatus(ctx context.Context, status string, tenantID enum.Tenant) ([]*HarvestDomain, error) {
 	var domains []*HarvestDomain
 
-	cur, err := s.collection.Find(ctx, bson.M{
-		"status":    status,
-		"tenant_id": tenantID,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	defer cur.Close(ctx)
-
-	if err := cur.All(ctx, &domains); err != nil {
-		return nil, err
+	query := Query{
+		Filter: M{
+			"status":    status,
+			"tenant_id": tenantID,
+		},
 	}
 
-	return domains, nil
+	return domains, s.repo.FindAll(ctx, query, &domains)
 }
 
 func (s *harvest) FindReadyForCollection(ctx context.Context, memberID string) ([]*HarvestDomain, error) {
 	var domains []*HarvestDomain
 
-	cur, err := s.collection.Find(ctx, bson.M{
-		"member_id": memberID,
-		"status":    "ready",
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	defer cur.Close(ctx)
-
-	if err := cur.All(ctx, &domains); err != nil {
-		return nil, err
+	query := Query{
+		Filter: M{
+			"member_id": memberID,
+			"status":    "ready",
+		},
 	}
 
-	return domains, nil
+	return domains, s.repo.FindAll(ctx, query, &domains)
 }
 
 func (s *harvest) UpdateStatus(ctx context.Context, id string, status string) error {
-	updates := bson.M{"status": status, "updated_at": time.Now()}
+	updates := M{"status": status, "updated_at": time.Now()}
 
 	if status == "collected" {
 		updates["collection_date"] = time.Now()
 	}
 
-	_, err := s.collection.UpdateOne(ctx,
-		bson.M{"_id": OID(id)},
-		bson.M{"$set": updates},
+	return s.repo.UpdateOne(ctx,
+		M{"_id": OID(id)},
+		M{"$set": updates},
 	)
-
-	return err
 }
 
 func (s *harvest) AddImage(ctx context.Context, id string, imageURL string) error {
-	_, err := s.collection.UpdateOne(ctx,
-		bson.M{"_id": OID(id)},
-		bson.M{
-			"$push": bson.M{"images": imageURL},
-			"$set":  bson.M{"updated_at": time.Now()},
+	return s.repo.UpdateOne(ctx,
+		M{"_id": OID(id)},
+		M{
+			"$push": M{"images": imageURL},
+			"$set":  M{"updated_at": time.Now()},
 		},
 	)
-
-	return err
 }
 
 func (s *harvest) Delete(ctx context.Context, id string) error {
-	_, err := s.collection.DeleteOne(ctx, bson.M{"_id": OID(id)})
-	return err
+	return s.repo.DeleteOne(ctx, M{"_id": OID(id)})
 }
 
-func (s *harvest) Count(ctx context.Context, filter bson.M) (int64, error) {
-	return s.collection.CountDocuments(ctx, filter)
+func (s *harvest) Count(ctx context.Context, filter M) (int64, error) {
+	return s.repo.CountDocuments(ctx, Query{Filter: filter}), nil
 }

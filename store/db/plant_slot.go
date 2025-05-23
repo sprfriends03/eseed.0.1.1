@@ -27,7 +27,7 @@ type PlantSlotDomain struct {
 }
 
 type plantSlot struct {
-	collection *mongo.Collection
+	repo *repo
 }
 
 func newPlantSlot(ctx context.Context, collection *mongo.Collection) *plantSlot {
@@ -66,7 +66,7 @@ func newPlantSlot(ctx context.Context, collection *mongo.Collection) *plantSlot 
 		logrus.Errorln("Failed to create plant slot indexes:", err)
 	}
 
-	return &plantSlot{collection}
+	return &plantSlot{repo: newrepo(collection)}
 }
 
 func (s *plantSlot) Create(ctx context.Context, domain *PlantSlotDomain) error {
@@ -75,24 +75,19 @@ func (s *plantSlot) Create(ctx context.Context, domain *PlantSlotDomain) error {
 	}
 	domain.BeforeSave()
 
-	_, err := s.collection.InsertOne(ctx, domain)
+	_, err := s.repo.Save(ctx, domain.ID, domain)
 	return err
 }
 
 func (s *plantSlot) Update(ctx context.Context, id string, domain *PlantSlotDomain) error {
 	domain.BeforeSave()
-
-	_, err := s.collection.UpdateOne(ctx,
-		bson.M{"_id": OID(id)},
-		bson.M{"$set": domain},
-	)
-
+	_, err := s.repo.Save(ctx, OID(id), domain)
 	return err
 }
 
 func (s *plantSlot) FindByID(ctx context.Context, id string) (*PlantSlotDomain, error) {
 	var domain PlantSlotDomain
-	err := s.collection.FindOne(ctx, bson.M{"_id": OID(id)}).Decode(&domain)
+	err := s.repo.FindOne(ctx, M{"_id": OID(id)}, &domain)
 	if err != nil {
 		return nil, err
 	}
@@ -102,52 +97,36 @@ func (s *plantSlot) FindByID(ctx context.Context, id string) (*PlantSlotDomain, 
 func (s *plantSlot) FindByMembershipID(ctx context.Context, membershipID string) ([]*PlantSlotDomain, error) {
 	var domains []*PlantSlotDomain
 
-	cur, err := s.collection.Find(ctx, bson.M{"membership_id": membershipID})
-
-	if err != nil {
-		return nil, err
-	}
-	defer cur.Close(ctx)
-
-	if err := cur.All(ctx, &domains); err != nil {
-		return nil, err
+	query := Query{
+		Filter: M{"membership_id": membershipID},
 	}
 
-	return domains, nil
+	return domains, s.repo.FindAll(ctx, query, &domains)
 }
 
 func (s *plantSlot) FindByMemberID(ctx context.Context, memberID string) ([]*PlantSlotDomain, error) {
 	var domains []*PlantSlotDomain
 
-	cur, err := s.collection.Find(ctx, bson.M{"member_id": memberID})
-
-	if err != nil {
-		return nil, err
-	}
-	defer cur.Close(ctx)
-
-	if err := cur.All(ctx, &domains); err != nil {
-		return nil, err
+	query := Query{
+		Filter: M{"member_id": memberID},
 	}
 
-	return domains, nil
+	return domains, s.repo.FindAll(ctx, query, &domains)
 }
 
 func (s *plantSlot) FindAvailable(ctx context.Context, tenantID enum.Tenant) ([]string, error) {
 	var domains []*PlantSlotDomain
 	var slotNumbers []string
 
-	cur, err := s.collection.Find(ctx, bson.M{
-		"status":    "available",
-		"tenant_id": tenantID,
-	})
-
-	if err != nil {
-		return nil, err
+	query := Query{
+		Filter: M{
+			"status":    "available",
+			"tenant_id": tenantID,
+		},
 	}
-	defer cur.Close(ctx)
 
-	if err := cur.All(ctx, &domains); err != nil {
+	err := s.repo.FindAll(ctx, query, &domains)
+	if err != nil {
 		return nil, err
 	}
 
@@ -161,33 +140,29 @@ func (s *plantSlot) FindAvailable(ctx context.Context, tenantID enum.Tenant) ([]
 }
 
 func (s *plantSlot) UpdateStatus(ctx context.Context, id string, status string) error {
-	_, err := s.collection.UpdateOne(ctx,
-		bson.M{"_id": OID(id)},
-		bson.M{"$set": bson.M{"status": status, "updated_at": time.Now()}},
+	return s.repo.UpdateOne(ctx,
+		M{"_id": OID(id)},
+		M{"$set": M{"status": status, "updated_at": time.Now()}},
 	)
-
-	return err
 }
 
 func (s *plantSlot) UpdateCurrentPlant(ctx context.Context, id string, plantID string) error {
-	_, err := s.collection.UpdateOne(ctx,
-		bson.M{"_id": OID(id)},
-		bson.M{"$set": bson.M{
+	return s.repo.UpdateOne(ctx,
+		M{"_id": OID(id)},
+		M{"$set": M{
 			"current_plant_id": plantID,
 			"status":           "planted",
 			"updated_at":       time.Now(),
 		}},
 	)
-
-	return err
 }
 
 func (s *plantSlot) FindByNFTInfo(ctx context.Context, tokenID string, contractAddress string) (*PlantSlotDomain, error) {
 	var domain PlantSlotDomain
-	err := s.collection.FindOne(ctx, bson.M{
+	err := s.repo.FindOne(ctx, M{
 		"nft_token_id":         tokenID,
 		"nft_contract_address": contractAddress,
-	}).Decode(&domain)
+	}, &domain)
 
 	if err != nil {
 		return nil, err
@@ -196,10 +171,9 @@ func (s *plantSlot) FindByNFTInfo(ctx context.Context, tokenID string, contractA
 }
 
 func (s *plantSlot) Delete(ctx context.Context, id string) error {
-	_, err := s.collection.DeleteOne(ctx, bson.M{"_id": OID(id)})
-	return err
+	return s.repo.DeleteOne(ctx, M{"_id": OID(id)})
 }
 
-func (s *plantSlot) Count(ctx context.Context, filter bson.M) (int64, error) {
-	return s.collection.CountDocuments(ctx, filter)
+func (s *plantSlot) Count(ctx context.Context, filter M) (int64, error) {
+	return s.repo.CountDocuments(ctx, Query{Filter: filter}), nil
 }

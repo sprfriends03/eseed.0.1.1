@@ -5,6 +5,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/nhnghia272/gopkg"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -34,8 +35,131 @@ type PlantTypeDomain struct {
 	Metadata          *map[string]string `json:"metadata" bson:"metadata"` // Additional flexible metadata
 }
 
+func (s PlantTypeDomain) BaseDto() *PlantTypeBaseDto {
+	return &PlantTypeBaseDto{
+		ID:                SID(s.ID),
+		Name:              gopkg.Value(s.Name),
+		Strain:            gopkg.Value(s.Strain),
+		Category:          gopkg.Value(s.Category),
+		ThcContent:        gopkg.Value(s.ThcContent),
+		CbdContent:        gopkg.Value(s.CbdContent),
+		GrowthDifficulty:  gopkg.Value(s.GrowthDifficulty),
+		AverageYield:      gopkg.Value(s.AverageYield),
+		SeasonalAvailable: gopkg.Value(s.SeasonalAvailable),
+		UpdatedAt:         gopkg.Value(s.UpdatedAt),
+	}
+}
+
+func (s PlantTypeDomain) DetailDto() *PlantTypeDetailDto {
+	return &PlantTypeDetailDto{
+		ID:                SID(s.ID),
+		Name:              gopkg.Value(s.Name),
+		Strain:            gopkg.Value(s.Strain),
+		Category:          gopkg.Value(s.Category),
+		ThcContent:        gopkg.Value(s.ThcContent),
+		CbdContent:        gopkg.Value(s.CbdContent),
+		GrowthDifficulty:  gopkg.Value(s.GrowthDifficulty),
+		AverageYield:      gopkg.Value(s.AverageYield),
+		FloweringTime:     gopkg.Value(s.FloweringTime),
+		GrowthPhases:      gopkg.Value(s.GrowthPhases),
+		Description:       gopkg.Value(s.Description),
+		CareInstructions:  gopkg.Value(s.CareInstructions),
+		Images:            gopkg.Value(s.Images),
+		SeasonalAvailable: gopkg.Value(s.SeasonalAvailable),
+		Effects:           gopkg.Value(s.Effects),
+		MedicalBenefits:   gopkg.Value(s.MedicalBenefits),
+		Metadata:          gopkg.Value(s.Metadata),
+		UpdatedAt:         gopkg.Value(s.UpdatedAt),
+	}
+}
+
+type PlantTypeBaseDto struct {
+	ID                string    `json:"plant_type_id"`
+	Name              string    `json:"name"`
+	Strain            string    `json:"strain"`
+	Category          string    `json:"category"`
+	ThcContent        float64   `json:"thc_content"`
+	CbdContent        float64   `json:"cbd_content"`
+	GrowthDifficulty  int       `json:"growth_difficulty"`
+	AverageYield      float64   `json:"average_yield"`
+	SeasonalAvailable bool      `json:"seasonal_available"`
+	UpdatedAt         time.Time `json:"updated_at"`
+}
+
+type PlantTypeDetailDto struct {
+	ID                string            `json:"plant_type_id"`
+	Name              string            `json:"name"`
+	Strain            string            `json:"strain"`
+	Category          string            `json:"category"`
+	ThcContent        float64           `json:"thc_content"`
+	CbdContent        float64           `json:"cbd_content"`
+	GrowthDifficulty  int               `json:"growth_difficulty"`
+	AverageYield      float64           `json:"average_yield"`
+	FloweringTime     int               `json:"flowering_time"`
+	GrowthPhases      []string          `json:"growth_phases"`
+	Description       string            `json:"description"`
+	CareInstructions  string            `json:"care_instructions"`
+	Images            []string          `json:"images"`
+	SeasonalAvailable bool              `json:"seasonal_available"`
+	Effects           []string          `json:"effects"`
+	MedicalBenefits   []string          `json:"medical_benefits"`
+	Metadata          map[string]string `json:"metadata"`
+	UpdatedAt         time.Time         `json:"updated_at"`
+}
+
+type PlantTypeQuery struct {
+	Query
+	Search        *string          `json:"search" form:"search" validate:"omitempty"`
+	Category      *string          `json:"category" form:"category" validate:"omitempty"`
+	Strain        *string          `json:"strain" form:"strain" validate:"omitempty"`
+	SeasonalOnly  *bool            `json:"seasonal_only" form:"seasonal_only" validate:"omitempty"`
+	MinThcContent *float64         `json:"min_thc_content" form:"min_thc_content" validate:"omitempty"`
+	MaxThcContent *float64         `json:"max_thc_content" form:"max_thc_content" validate:"omitempty"`
+	DataStatus    *enum.DataStatus `json:"data_status" form:"data_status" validate:"omitempty,data_status"`
+	TenantId      *enum.Tenant     `json:"tenant_id" form:"tenant_id" validate:"omitempty,len=24"`
+}
+
+func (s *PlantTypeQuery) Build() *PlantTypeQuery {
+	if s.Filter == nil {
+		s.Filter = M{}
+	}
+	if s.Search != nil {
+		s.Filter["$or"] = []M{
+			{"name": Regex(gopkg.Value(s.Search))},
+			{"strain": Regex(gopkg.Value(s.Search))},
+			{"category": Regex(gopkg.Value(s.Search))},
+		}
+	}
+	if s.Category != nil {
+		s.Filter["category"] = s.Category
+	}
+	if s.Strain != nil {
+		s.Filter["strain"] = s.Strain
+	}
+	if s.SeasonalOnly != nil && *s.SeasonalOnly {
+		s.Filter["seasonal_available"] = true
+	}
+	if s.MinThcContent != nil {
+		s.Filter["thc_content"] = M{"$gte": s.MinThcContent}
+	}
+	if s.MaxThcContent != nil {
+		if s.Filter["thc_content"] == nil {
+			s.Filter["thc_content"] = M{"$lte": s.MaxThcContent}
+		} else {
+			s.Filter["thc_content"].(M)["$lte"] = s.MaxThcContent
+		}
+	}
+	if s.DataStatus != nil {
+		s.Filter["data_status"] = s.DataStatus
+	}
+	if s.TenantId != nil {
+		s.Filter["tenant_id"] = s.TenantId
+	}
+	return s
+}
+
 type plantType struct {
-	*repo
+	repo *repo
 }
 
 func newPlantType(ctx context.Context, collection *mongo.Collection) *plantType {
@@ -70,7 +194,7 @@ func newPlantType(ctx context.Context, collection *mongo.Collection) *plantType 
 		logrus.Errorln("Failed to create plant type indexes:", err)
 	}
 
-	return &plantType{newrepo(collection)}
+	return &plantType{repo: newrepo(collection)}
 }
 
 func (s *plantType) Create(ctx context.Context, domain *PlantTypeDomain) error {
@@ -79,19 +203,19 @@ func (s *plantType) Create(ctx context.Context, domain *PlantTypeDomain) error {
 	}
 	domain.BeforeSave()
 
-	_, err := s.Save(ctx, domain.ID, domain)
+	_, err := s.repo.Save(ctx, domain.ID, domain)
 	return err
 }
 
 func (s *plantType) Update(ctx context.Context, id string, domain *PlantTypeDomain) error {
 	domain.BeforeSave()
-	_, err := s.Save(ctx, OID(id), domain)
+	_, err := s.repo.Save(ctx, OID(id), domain)
 	return err
 }
 
 func (s *plantType) FindByID(ctx context.Context, id string) (*PlantTypeDomain, error) {
 	var domain PlantTypeDomain
-	err := s.FindOne(ctx, M{"_id": OID(id)}, &domain)
+	err := s.repo.FindOne(ctx, M{"_id": OID(id)}, &domain)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +224,7 @@ func (s *plantType) FindByID(ctx context.Context, id string) (*PlantTypeDomain, 
 
 func (s *plantType) FindByName(ctx context.Context, name string) (*PlantTypeDomain, error) {
 	var domain PlantTypeDomain
-	err := s.FindOne(ctx, M{"name": name}, &domain)
+	err := s.repo.FindOne(ctx, M{"name": name}, &domain)
 	if err != nil {
 		return nil, err
 	}
@@ -109,75 +233,36 @@ func (s *plantType) FindByName(ctx context.Context, name string) (*PlantTypeDoma
 
 func (s *plantType) FindByStrain(ctx context.Context, strain string) (*PlantTypeDomain, error) {
 	var domain PlantTypeDomain
-	err := s.FindOne(ctx, M{"strain": strain}, &domain)
+	err := s.repo.FindOne(ctx, M{"strain": strain}, &domain)
 	if err != nil {
 		return nil, err
 	}
 	return &domain, nil
 }
 
-func (s *plantType) FindByCategory(ctx context.Context, category string, tenant enum.Tenant, offset, limit int64) ([]*PlantTypeDomain, error) {
-	var domains []*PlantTypeDomain
-
-	query := Query{
-		Filter: M{
-			"category":  category,
-			"tenant_id": tenant,
-		},
-		Page:  offset/limit + 1,
-		Limit: limit,
-		Sorts: "name.asc",
+func (s *plantType) FindByCategory(ctx context.Context, category string, tenant enum.Tenant) ([]*PlantTypeDomain, error) {
+	query := &PlantTypeQuery{
+		Category: gopkg.Pointer(category),
+		TenantId: gopkg.Pointer(tenant),
 	}
-
-	err := s.repo.FindAll(ctx, query, &domains)
-	if err != nil {
-		return nil, err
-	}
-
-	return domains, nil
+	return s.FindAll(ctx, query)
 }
 
-func (s *plantType) FindAll(ctx context.Context, tenant enum.Tenant, offset, limit int64) ([]*PlantTypeDomain, error) {
-	var domains []*PlantTypeDomain
-
-	query := Query{
-		Filter: M{"tenant_id": tenant},
-		Page:   offset/limit + 1,
-		Limit:  limit,
-		Sorts:  "name.asc",
-	}
-
-	err := s.repo.FindAll(ctx, query, &domains)
-	if err != nil {
-		return nil, err
-	}
-
-	return domains, nil
+func (s *plantType) FindAll(ctx context.Context, q *PlantTypeQuery, opts ...*options.FindOptions) ([]*PlantTypeDomain, error) {
+	domains := make([]*PlantTypeDomain, 0)
+	return domains, s.repo.FindAll(ctx, q.Build().Query, &domains, opts...)
 }
 
-func (s *plantType) FindSeasonal(ctx context.Context, tenant enum.Tenant, offset, limit int64) ([]*PlantTypeDomain, error) {
-	var domains []*PlantTypeDomain
-
-	query := Query{
-		Filter: M{
-			"tenant_id":          tenant,
-			"seasonal_available": true,
-		},
-		Page:  offset/limit + 1,
-		Limit: limit,
-		Sorts: "name.asc",
+func (s *plantType) FindSeasonal(ctx context.Context, tenant enum.Tenant) ([]*PlantTypeDomain, error) {
+	query := &PlantTypeQuery{
+		SeasonalOnly: gopkg.Pointer(true),
+		TenantId:     gopkg.Pointer(tenant),
 	}
-
-	err := s.repo.FindAll(ctx, query, &domains)
-	if err != nil {
-		return nil, err
-	}
-
-	return domains, nil
+	return s.FindAll(ctx, query)
 }
 
 func (s *plantType) AddImage(ctx context.Context, id string, imageURL string) error {
-	return s.UpdateOne(ctx,
+	return s.repo.UpdateOne(ctx,
 		M{"_id": OID(id)},
 		M{
 			"$push": M{"images": imageURL},
@@ -187,9 +272,9 @@ func (s *plantType) AddImage(ctx context.Context, id string, imageURL string) er
 }
 
 func (s *plantType) Delete(ctx context.Context, id string) error {
-	return s.DeleteOne(ctx, M{"_id": OID(id)})
+	return s.repo.DeleteOne(ctx, M{"_id": OID(id)})
 }
 
-func (s *plantType) Count(ctx context.Context, filter M) int64 {
-	return s.CountDocuments(ctx, Query{Filter: filter})
+func (s *plantType) Count(ctx context.Context, q *PlantTypeQuery, opts ...*options.CountOptions) int64 {
+	return s.repo.CountDocuments(ctx, q.Build().Query, opts...)
 }

@@ -27,7 +27,7 @@ type CareRecordDomain struct {
 }
 
 type careRecord struct {
-	collection *mongo.Collection
+	repo *repo
 }
 
 func newCareRecord(ctx context.Context, collection *mongo.Collection) *careRecord {
@@ -58,7 +58,7 @@ func newCareRecord(ctx context.Context, collection *mongo.Collection) *careRecor
 		logrus.Errorln("Failed to create care record indexes:", err)
 	}
 
-	return &careRecord{collection}
+	return &careRecord{repo: newrepo(collection)}
 }
 
 func (s *careRecord) Create(ctx context.Context, domain *CareRecordDomain) error {
@@ -67,24 +67,19 @@ func (s *careRecord) Create(ctx context.Context, domain *CareRecordDomain) error
 	}
 	domain.BeforeSave()
 
-	_, err := s.collection.InsertOne(ctx, domain)
+	_, err := s.repo.Save(ctx, domain.ID, domain)
 	return err
 }
 
 func (s *careRecord) Update(ctx context.Context, id string, domain *CareRecordDomain) error {
 	domain.BeforeSave()
-
-	_, err := s.collection.UpdateOne(ctx,
-		bson.M{"_id": OID(id)},
-		bson.M{"$set": domain},
-	)
-
+	_, err := s.repo.Save(ctx, OID(id), domain)
 	return err
 }
 
 func (s *careRecord) FindByID(ctx context.Context, id string) (*CareRecordDomain, error) {
 	var domain CareRecordDomain
-	err := s.collection.FindOne(ctx, bson.M{"_id": OID(id)}).Decode(&domain)
+	err := s.repo.FindOne(ctx, M{"_id": OID(id)}, &domain)
 	if err != nil {
 		return nil, err
 	}
@@ -99,21 +94,11 @@ func (s *careRecord) FindByPlantID(ctx context.Context, plantID string, offset, 
 		SetLimit(limit).
 		SetSort(bson.D{{Key: "care_date", Value: -1}})
 
-	cur, err := s.collection.Find(ctx,
-		bson.M{"plant_id": plantID},
-		opts,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-	defer cur.Close(ctx)
-
-	if err := cur.All(ctx, &domains); err != nil {
-		return nil, err
+	query := Query{
+		Filter: M{"plant_id": plantID},
 	}
 
-	return domains, nil
+	return domains, s.repo.FindAll(ctx, query, &domains, opts)
 }
 
 func (s *careRecord) FindByMemberID(ctx context.Context, memberID string, offset, limit int64) ([]*CareRecordDomain, error) {
@@ -124,63 +109,43 @@ func (s *careRecord) FindByMemberID(ctx context.Context, memberID string, offset
 		SetLimit(limit).
 		SetSort(bson.D{{Key: "care_date", Value: -1}})
 
-	cur, err := s.collection.Find(ctx,
-		bson.M{"member_id": memberID},
-		opts,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-	defer cur.Close(ctx)
-
-	if err := cur.All(ctx, &domains); err != nil {
-		return nil, err
+	query := Query{
+		Filter: M{"member_id": memberID},
 	}
 
-	return domains, nil
+	return domains, s.repo.FindAll(ctx, query, &domains, opts)
 }
 
 func (s *careRecord) FindByDateRange(ctx context.Context, plantID string, startDate, endDate time.Time) ([]*CareRecordDomain, error) {
 	var domains []*CareRecordDomain
 
-	cur, err := s.collection.Find(ctx, bson.M{
-		"plant_id": plantID,
-		"care_date": bson.M{
-			"$gte": startDate,
-			"$lte": endDate,
+	query := Query{
+		Filter: M{
+			"plant_id": plantID,
+			"care_date": M{
+				"$gte": startDate,
+				"$lte": endDate,
+			},
 		},
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	defer cur.Close(ctx)
-
-	if err := cur.All(ctx, &domains); err != nil {
-		return nil, err
 	}
 
-	return domains, nil
+	return domains, s.repo.FindAll(ctx, query, &domains)
 }
 
 func (s *careRecord) AddImage(ctx context.Context, id string, imageURL string) error {
-	_, err := s.collection.UpdateOne(ctx,
-		bson.M{"_id": OID(id)},
-		bson.M{
-			"$push": bson.M{"images": imageURL},
-			"$set":  bson.M{"updated_at": time.Now()},
+	return s.repo.UpdateOne(ctx,
+		M{"_id": OID(id)},
+		M{
+			"$push": M{"images": imageURL},
+			"$set":  M{"updated_at": time.Now()},
 		},
 	)
-
-	return err
 }
 
 func (s *careRecord) Delete(ctx context.Context, id string) error {
-	_, err := s.collection.DeleteOne(ctx, bson.M{"_id": OID(id)})
-	return err
+	return s.repo.DeleteOne(ctx, M{"_id": OID(id)})
 }
 
-func (s *careRecord) Count(ctx context.Context, filter bson.M) (int64, error) {
-	return s.collection.CountDocuments(ctx, filter)
+func (s *careRecord) Count(ctx context.Context, filter M) (int64, error) {
+	return s.repo.CountDocuments(ctx, Query{Filter: filter}), nil
 }

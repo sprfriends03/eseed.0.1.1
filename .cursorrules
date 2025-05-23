@@ -52,14 +52,15 @@ DEVELOPMENT_PRINCIPLES: |
   - Write thorough tests for all major functionality
   - Never add stubbing or fake data for dev/prod environments (only for tests)
   - Document component fields, types, and dependencies
-  - Reuse functions from store/db/repo.go and will confirm with you before making any database changes.
+  - Reuse functions from store/db/repo.go by using `repo *repo` for all database operations and will confirm with you before making any database changes
   - The routes are directly defined in the route/ directory with version prefixes in the route registration (e.g., /auth/v1, /storage/v1, etc.)
   - Reuse BaseDomain for all collections using `json:"inline"` and `bson:",inline"`
   - Reuse Query for all filter and search
   - Use ecode.Error for all errors
   - Redis Cache Management: we already have in @rdb and @store/rdb/index.go
   - MinIO Access Control implemented in @store/storage/index.go
-  - with all @store/db/ implementation follow coding style & patterns in @store/db/repo.go
+  - with all @store/db/ implementation follow coding style & patterns in @store/db/role.go
+  - 
 # Code Style and Patterns
 
 CODING_GUIDELINES: |

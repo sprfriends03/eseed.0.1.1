@@ -28,7 +28,7 @@ type MemberDomain struct {
 }
 
 type member struct {
-	collection *mongo.Collection
+	repo *repo
 }
 
 func newMember(ctx context.Context, collection *mongo.Collection) *member {
@@ -58,7 +58,7 @@ func newMember(ctx context.Context, collection *mongo.Collection) *member {
 		logrus.Errorln("Failed to create member indexes:", err)
 	}
 
-	return &member{collection}
+	return &member{repo: newrepo(collection)}
 }
 
 func (s *member) Create(ctx context.Context, domain *MemberDomain) error {
@@ -67,24 +67,19 @@ func (s *member) Create(ctx context.Context, domain *MemberDomain) error {
 	}
 	domain.BeforeSave()
 
-	_, err := s.collection.InsertOne(ctx, domain)
+	_, err := s.repo.Save(ctx, domain.ID, domain)
 	return err
 }
 
 func (s *member) Update(ctx context.Context, id string, domain *MemberDomain) error {
 	domain.BeforeSave()
-
-	_, err := s.collection.UpdateOne(ctx,
-		bson.M{"_id": OID(id)},
-		bson.M{"$set": domain},
-	)
-
+	_, err := s.repo.Save(ctx, OID(id), domain)
 	return err
 }
 
 func (s *member) FindByID(ctx context.Context, id string) (*MemberDomain, error) {
 	var domain MemberDomain
-	err := s.collection.FindOne(ctx, bson.M{"_id": OID(id)}).Decode(&domain)
+	err := s.repo.FindOne(ctx, M{"_id": OID(id)}, &domain)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +88,7 @@ func (s *member) FindByID(ctx context.Context, id string) (*MemberDomain, error)
 
 func (s *member) FindByEmail(ctx context.Context, email string) (*MemberDomain, error) {
 	var domain MemberDomain
-	err := s.collection.FindOne(ctx, bson.M{"email": email}).Decode(&domain)
+	err := s.repo.FindOne(ctx, M{"email": email}, &domain)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +97,7 @@ func (s *member) FindByEmail(ctx context.Context, email string) (*MemberDomain, 
 
 func (s *member) FindByPhone(ctx context.Context, phone string) (*MemberDomain, error) {
 	var domain MemberDomain
-	err := s.collection.FindOne(ctx, bson.M{"phone": phone}).Decode(&domain)
+	err := s.repo.FindOne(ctx, M{"phone": phone}, &domain)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +106,7 @@ func (s *member) FindByPhone(ctx context.Context, phone string) (*MemberDomain, 
 
 func (s *member) FindByUserID(ctx context.Context, userID string) (*MemberDomain, error) {
 	var domain MemberDomain
-	err := s.collection.FindOne(ctx, bson.M{"user_id": userID}).Decode(&domain)
+	err := s.repo.FindOne(ctx, M{"user_id": userID}, &domain)
 	if err != nil {
 		return nil, err
 	}
@@ -120,22 +115,12 @@ func (s *member) FindByUserID(ctx context.Context, userID string) (*MemberDomain
 
 func (s *member) FindWithKYCStatus(ctx context.Context, status string, tenantID enum.Tenant) ([]*MemberDomain, error) {
 	var domains []*MemberDomain
-
-	cur, err := s.collection.Find(ctx, bson.M{
+	filter := M{
 		"kyc_status": status,
 		"tenant_id":  tenantID,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	defer cur.Close(ctx)
-
-	if err := cur.All(ctx, &domains); err != nil {
-		return nil, err
 	}
 
-	return domains, nil
+	return domains, s.repo.FindAll(ctx, Query{Filter: filter}, &domains)
 }
 
 func (s *member) FindByTenantID(ctx context.Context, tenantID enum.Tenant, offset, limit int64) ([]*MemberDomain, error) {
@@ -146,28 +131,13 @@ func (s *member) FindByTenantID(ctx context.Context, tenantID enum.Tenant, offse
 		SetLimit(limit).
 		SetSort(bson.D{{Key: "created_at", Value: -1}})
 
-	cur, err := s.collection.Find(ctx,
-		bson.M{"tenant_id": tenantID},
-		opts,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-	defer cur.Close(ctx)
-
-	if err := cur.All(ctx, &domains); err != nil {
-		return nil, err
-	}
-
-	return domains, nil
+	return domains, s.repo.FindAll(ctx, Query{Filter: M{"tenant_id": tenantID}}, &domains, opts)
 }
 
 func (s *member) Delete(ctx context.Context, id string) error {
-	_, err := s.collection.DeleteOne(ctx, bson.M{"_id": OID(id)})
-	return err
+	return s.repo.DeleteOne(ctx, M{"_id": OID(id)})
 }
 
-func (s *member) Count(ctx context.Context, filter bson.M) (int64, error) {
-	return s.collection.CountDocuments(ctx, filter)
+func (s *member) Count(ctx context.Context, filter M) (int64, error) {
+	return s.repo.CountDocuments(ctx, Query{Filter: filter}), nil
 }
