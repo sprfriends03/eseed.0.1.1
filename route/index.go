@@ -30,7 +30,13 @@ import (
 	"github.com/nhnghia272/gopkg"
 )
 
-var handlers = make([]handler, 0)
+var (
+	handlers     = make([]handler, 0)
+	defaultLimit = redis_rate.PerMinute(100)                                 // Default: 100 requests per minute
+	authLimit    = redis_rate.Limit{Rate: 10, Burst: 3, Period: time.Minute} // Auth routes: 10 req/min, burst 3
+	// Define a new stricter limit for member login
+	memberLoginRateLimit = redis_rate.Limit{Rate: 5, Burst: 2, Period: time.Minute} // Member login: 5 req/min, burst 2
+)
 
 type handler = func(*middleware, *gin.Engine)
 
@@ -41,7 +47,7 @@ func Bootstrap(store *store.Store) error {
 
 	app := gin.New()
 	app.NoRoute(mdw.NoRoute())
-	app.Use(mdw.Cors(), mdw.Compress(), mdw.Trace(), mdw.Logger(), mdw.Recover(), mdw.Error())
+	app.Use(mdw.Cors(), mdw.Compress(), mdw.SecureHeaders(), mdw.Trace(), mdw.Logger(), mdw.Recover(), mdw.Error())
 
 	for i := range handlers {
 		handlers[i](mdw, app)
@@ -78,6 +84,20 @@ func (s middleware) Cors() gin.HandlerFunc {
 
 func (s middleware) Compress() gin.HandlerFunc {
 	return gzip.Gzip(gzip.DefaultCompression)
+}
+
+// SecureHeaders adds common security-related HTTP headers.
+func (s middleware) SecureHeaders() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("X-Frame-Options", "DENY")
+		// Basic CSP, can be expanded. Allows resources only from the same origin.
+		c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'")
+		// X-XSS-Protection is deprecated by modern browsers in favor of CSP.
+		// HSTS (Strict-Transport-Security) should be added carefully after confirming site-wide HTTPS.
+		// c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		c.Next()
+	}
 }
 
 type responseWriter struct {
@@ -217,22 +237,92 @@ func (s middleware) BasicAuth() gin.HandlerFunc {
 	}
 }
 
+func (s middleware) RequireKYCStatus(requiredStatus string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session := s.Session(c)
+
+		if session.IsMember == nil || !*session.IsMember {
+			c.Error(ecode.New(http.StatusForbidden, "member_required_for_kyc_check").Desc(fmt.Errorf("This action requires a member account.")))
+			c.Abort()
+			return
+		}
+
+		if session.KYCStatus == nil {
+			c.Error(ecode.New(http.StatusForbidden, "kyc_status_missing").Desc(fmt.Errorf("KYC status is not available for this member.")))
+			c.Abort()
+			return
+		}
+
+		if *session.KYCStatus != requiredStatus {
+			formattedMsg := fmt.Sprintf("Action requires KYC status '%s', but current status is '%s'.", requiredStatus, *session.KYCStatus)
+			c.Error(ecode.New(http.StatusForbidden, "kyc_status_insufficient").Desc(fmt.Errorf(formattedMsg)))
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
+// RequireMembershipStatus is a middleware that checks if the authenticated user is a member
+// and has the specified Membership status. It should be used AFTER BearerAuth.
+func (s middleware) RequireMembershipStatus(requiredStatus string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session := s.Session(c)
+
+		// Check if IsMember is populated and true
+		if session.IsMember == nil || !*session.IsMember {
+			c.Error(ecode.New(http.StatusForbidden, "member_required_for_membership_check").Desc(fmt.Errorf("This action requires a member account for membership status validation.")))
+			c.Abort()
+			return
+		}
+
+		// Check if MembershipStatus is populated
+		if session.MembershipStatus == nil {
+			c.Error(ecode.New(http.StatusForbidden, "membership_status_missing").Desc(fmt.Errorf("Membership status is not available for this member.")))
+			c.Abort()
+			return
+		}
+
+		// Compare MembershipStatus with the required status
+		if *session.MembershipStatus != requiredStatus {
+			formattedMsg := fmt.Sprintf("Action requires membership status '%s', but current status is '%s'.", requiredStatus, *session.MembershipStatus)
+			c.Error(ecode.New(http.StatusForbidden, "membership_status_insufficient").Desc(fmt.Errorf(formattedMsg)))
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
 func (s middleware) Limiter(c *gin.Context, session *db.AuthSessionDto) bool {
 	var (
-		key   = c.Request.URL.Path + c.ClientIP()
-		limit = redis_rate.PerMinute(100)
+		key string
+		err error
+		res *redis_rate.Result
 	)
-	if session != nil {
-		key = c.Request.URL.Path + string(session.TenantId)
-		limit = redis_rate.Limit{Rate: 10_000, Burst: 1000, Period: time.Second * 10}
-		if c.Request.Method != http.MethodGet {
-			limit = redis_rate.Limit{Rate: 1_000, Burst: 100, Period: time.Second * 10}
-		}
+
+	if session == nil || session.Username == "" {
+		key = c.ClientIP()
+	} else {
+		key = session.Username
 	}
-	if res, err := s.limiter.Allow(c.Request.Context(), key, limit); err != nil || res.Allowed == 0 {
-		return true
+	// TODO: revisit member auth endpoint limits later. (Original TODO)
+
+	switch c.FullPath() {
+	case "/auth/v1/member/login": // Apply specific stricter limit for member login
+		res, err = s.limiter.Allow(c.Request.Context(), key, memberLoginRateLimit)
+	case "/auth/v1/login", "/auth/v1/register", "/auth/v1/refresh-token":
+		res, err = s.limiter.Allow(c.Request.Context(), key, authLimit)
+	default:
+		res, err = s.limiter.Allow(c.Request.Context(), key, defaultLimit)
 	}
-	return false
+
+	if err != nil {
+		return true // Fail open on limiter error (block request)
+	}
+	return res.Allowed == 0
 }
 
 func (s middleware) Session(c *gin.Context, session ...*db.AuthSessionDto) *db.AuthSessionDto {

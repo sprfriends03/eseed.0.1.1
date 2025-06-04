@@ -1,9 +1,11 @@
 package db
 
 import (
+	"app/pkg/ecode"
 	"app/pkg/enum"
 	"app/pkg/validate"
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/nhnghia272/gopkg"
@@ -13,17 +15,20 @@ import (
 )
 
 type UserDomain struct {
-	BaseDomain   `json:"inline"`
-	Name         *string          `json:"name,omitempty" validate:"omitempty"`
-	Phone        *string          `json:"phone,omitempty" validate:"omitempty,lowercase"`
-	Email        *string          `json:"email,omitempty" validate:"omitempty,lowercase"`
-	Username     *string          `json:"username,omitempty" validate:"omitempty,lowercase"`
-	Password     *string          `json:"password,omitempty" validate:"omitempty"`
-	DataStatus   *enum.DataStatus `json:"data_status,omitempty" validate:"omitempty,data_status"`
-	RoleIds      *[]string        `json:"role_ids,omitempty" validate:"omitempty,dive,len=24"`
-	IsRoot       *bool            `json:"is_root,omitempty" validate:"omitempty"`
-	TenantId     *enum.Tenant     `json:"tenant_id,omitempty" validate:"omitempty,len=24"`
-	VersionToken *int64           `json:"version_token,omitempty" validate:"omitempty"`
+	BaseDomain                      `json:"inline"`
+	Name                            *string          `json:"name,omitempty" validate:"omitempty"`
+	Phone                           *string          `json:"phone,omitempty" validate:"omitempty,lowercase"`
+	Email                           *string          `json:"email,omitempty" validate:"omitempty,lowercase"`
+	Username                        *string          `json:"username,omitempty" validate:"omitempty,lowercase"`
+	Password                        *string          `json:"password,omitempty" validate:"omitempty"`
+	DataStatus                      *enum.DataStatus `json:"data_status,omitempty" validate:"omitempty,data_status"`
+	RoleIds                         *[]string        `json:"role_ids,omitempty" validate:"omitempty,dive,len=24"`
+	IsRoot                          *bool            `json:"is_root,omitempty" validate:"omitempty"`
+	TenantId                        *enum.Tenant     `json:"tenant_id,omitempty" validate:"omitempty,len=24"`
+	VersionToken                    *int64           `json:"version_token,omitempty" validate:"omitempty"`
+	EmailVerified                   *bool            `json:"email_verified,omitempty" bson:"email_verified,omitempty"`
+	EmailVerificationToken          *string          `json:"-" bson:"email_verification_token,omitempty"`
+	EmailVerificationTokenExpiresAt *time.Time       `json:"-" bson:"email_verification_token_expires_at,omitempty"`
 }
 
 func (s *UserDomain) Validate() error {
@@ -163,6 +168,10 @@ func newUser(ctx context.Context, col *mongo.Collection) *user {
 		Keys:    bson.D{{Key: "tenant_id", Value: 1}, {Key: "email", Value: 1}},
 		Options: options.Index().SetUnique(true).SetPartialFilterExpression(bson.M{"email": bson.M{"$exists": true, "$gt": ""}}),
 	})
+	col.Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys:    bson.D{{Key: "email_verification_token", Value: 1}},
+		Options: options.Index().SetUnique(true).SetSparse(true).SetPartialFilterExpression(bson.M{"email_verification_token": bson.M{"$exists": true, "$gt": ""}}),
+	})
 	return &user{newrepo(col)}
 }
 
@@ -212,6 +221,13 @@ func (s user) FindAllByTenant(ctx context.Context, tenant enum.Tenant) ([]*UserD
 
 func (s user) FindOneByTenant_Username(ctx context.Context, tenant enum.Tenant, username string) (*UserDomain, error) {
 	return s.FindOne(ctx, M{"tenant_id": tenant, "username": username})
+}
+
+func (s user) FindOneByEmailVerificationToken(ctx context.Context, token string) (*UserDomain, error) {
+	if token == "" {
+		return nil, ecode.New(http.StatusBadRequest, "empty_verification_token")
+	}
+	return s.FindOne(ctx, M{"email_verification_token": token})
 }
 
 func (s user) IncrementVersionToken(ctx context.Context, id string) error {

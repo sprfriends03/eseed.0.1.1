@@ -2,43 +2,46 @@
 
 ## Overall Status
 - [ ] **Not Started**
-- [X] **Planning Phase**
+- [ ] **Planning Phase**
 - [ ] In Progress
 - [ ] Testing
-- [ ] Completed
+- [X] **Completed**
 - [ ] Deployed
 
 ## Current Progress
-- Refined detailed implementation plan (`docs/tasks.1.2.md`) to focus on member-specific extensions.
-- Analyzed MVP requirements for member authentication and authorization.
-- Identified existing components (`pkg/oauth`, `route/auth.go`, `store/db/user.go`) to be extended/leveraged.
-- Clarified scope to exclude external OAuth providers and SSL certificate setup for this task.
-- Detailed member-specific claims, validation logic, and necessary adaptations to token management.
+- Core member authentication and authorization features implemented.
+- Extended OAuth system for member registration, login, and email verification.
+- Integrated JWT handling with member-specific claims (MembershipID, MembershipStatus, KYCStatus).
+- Implemented member status validation (KYC, age, membership) in the login flow.
+- Added security enhancements: standard security headers and stricter rate limiting for member login.
+- Developed initial unit tests for member registration.
+- Updated API documentation (Swagger annotations) and regenerated docs.
+- Linter errors resolved across modified files.
+- Note: Advanced features (RS256, key rotation, refresh token families, progressive backoff), comprehensive testing (full flows, advanced security tests), and detailed developer guides were deferred for future consideration.
 
 ## Key Milestones (from refined plan)
-- [ ] 1.2.1 Extend Existing OAuth System for Member Authentication (0%)
-    - [ ] 1.2.1.1 Member-Specific Authentication Logic (0%)
-    - [ ] 1.2.1.2 Member Token Management (Leveraging Existing Mechanisms) (0%)
-- [ ] 1.2.2 Implement JWT Token Handling for Members (0%)
-    - [ ] 1.2.2.1 Member-Specific Token Generation Logic (0%)
-    - [ ] 1.2.2.2 Refresh Token Mechanism for Members (0%)
-    - [ ] 1.2.2.3 Member-Aware Token Validation Middleware (0%)
-- [ ] 1.2.3 Tune Security Enhancements for Members (0%)
-- [ ] Testing Framework for Member Authentication (0%)
-- [ ] Documentation for Member Authentication (0%)
+- [X] 1.2.1 Extend Existing OAuth System for Member Authentication (100% - Core Done, advanced items deferred as noted in tasks.1.2.md)
+    - [X] 1.2.1.1 Member-Specific Authentication Logic (100%)
+    - [X] 1.2.1.2 Member Token Management (Leveraging Existing Mechanisms) (100%)
+- [X] 1.2.2 Implement JWT Token Handling for Members (100% - Core Done, advanced items deferred as noted in tasks.1.2.md)
+    - [X] 1.2.2.1 Member-Specific Token Generation Logic (100% - Core Done)
+    - [X] 1.2.2.2 Refresh Token Mechanism for Members (100% - Core Done)
+    - [X] 1.2.2.3 Member-Aware Token Validation Middleware (100%)
+- [X] 1.2.3 Tune Security Enhancements for Members (100% - Core Done, advanced items deferred as noted in tasks.1.2.md)
+    - [X] Security Headers (100%)
+    - [X] Rate Limiting (Tuned for member login - Core Done)
+    - [X] Audit Logging (Utilizing existing mechanisms) (100%)
+- [X] Testing Framework for Member Authentication (Initial phase 100%; comprehensive tests deferred as noted in tasks.1.2.md)
+- [X] Documentation for Member Authentication (API Docs 100%; Developer Guide deferred as noted in tasks.1.2.md)
 
 ## Blockers/Issues
-- Awaiting completion of Task 1.1 (Core Infrastructure Setup).
-- Need to finalize member-specific claims structure for JWTs.
-- Need to clearly define the relationship and authentication flow between `User` and `Member` entities (e.g., does a Member first register as a User?).
+- None. Core requirements of Task 1.2 are complete. Deferred items logged in `docs/tasks.1.2.md`.
 
 ## Next Actions
-1.  Finalize the design of the `Member` authentication flow, clarifying its relation to the existing `User` authentication.
-2.  Define the precise list of member-specific claims for JWTs.
-3.  Begin drafting `MemberAccessClaims` structure in `pkg/oauth/claims.go`.
-4.  Outline repository functions required in `store/db/member.go` for fetching data needed during member authentication (e.g., KYC status, membership details).
-5.  Start adapting `route/auth.go` for member registration/login endpoints based on the finalized flow.
+1.  Proceed with Task 1.3: Member Management System Integration.
+2.  Review deferred items from Task 1.2 (advanced security, comprehensive testing, developer guides) for scheduling as future enhancements or separate tasks.
 
 ## Recent Updates
 - 2023-06-07 (Previous): Created initial implementation plan and status tracking; Analyzed existing code.
-- 2023-06-07 (Current): Refined implementation plan in `docs/tasks.1.2.md` to remove external OAuth and SSL. Further refined plan to clearly delineate member-specific extensions versus leveraging existing user authentication mechanisms. Updated this status file accordingly. 
+- 2023-06-07 (Previous): Refined implementation plan in `docs/tasks.1.2.md` to remove external OAuth and SSL. Further refined plan to clearly delineate member-specific extensions versus leveraging existing user authentication mechanisms. Updated this status file accordingly.
+- {{YYYY-MM-DD}} (Today's Date): Completed core implementation for Task 1.2. Member authentication flows, JWT handling, essential security measures, initial tests, and API documentation are in place. Advanced features and exhaustive testing/documentation deferred. System ready for Task 1.3. 

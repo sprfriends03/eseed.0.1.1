@@ -44,3 +44,13 @@ type RefreshClaims struct {
 	JwtType JwtType `json:"typ"`
 	Version int64   `json:"ver"`
 }
+
+// MemberAccessClaims defines the claims specific to a member's access token.
+// It includes standard access claims along with member-specific details.
+type MemberAccessClaims struct {
+	AccessClaims             // Embeds BaseClaims, JwtType, Version
+	MembershipID     *string `json:"mid,omitempty"` // Current active Membership ID
+	MembershipStatus *string `json:"mst,omitempty"` // Status of the current membership (e.g., active, expired)
+	KYCStatus        *string `json:"kys,omitempty"` // Member's KYC status (e.g., verified, pending)
+	// TODO: Consider adding MemberRole or specific permissions if distinct from general user roles
+}

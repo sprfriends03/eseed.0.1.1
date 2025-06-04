@@ -16,6 +16,8 @@ const (
 	KindPermission Kind = "permission"
 	KindDataStatus Kind = "data_status"
 	KindDataAction Kind = "data_action"
+	// KindMemberStatus Kind = "member_status" // Reverted
+	// KindKYCStatus    Kind = "kyc_status"    // Reverted
 )
 
 func Tags() map[string][]string {
@@ -23,6 +25,8 @@ func Tags() map[string][]string {
 		string(KindPermission): gopkg.MapFunc(PermissionValues(), func(e Permission) string { return string(e) }),
 		string(KindDataStatus): gopkg.MapFunc(DataStatusValues(), func(e DataStatus) string { return string(e) }),
 		string(KindDataAction): gopkg.MapFunc(DataActionValues(), func(e DataAction) string { return string(e) }),
+		// string(KindMemberStatus): gopkg.MapFunc(MemberStatusValues(), func(e MemberStatus) string { return string(e) }), // Reverted
+		// string(KindKYCStatus):    gopkg.MapFunc(KYCStatusValues(), func(e KYCStatus) string { return string(e) }),       // Reverted
 	}
 }
 
@@ -164,6 +168,8 @@ func NotificationStatusValues() []NotificationStatus {
 type MemberStatus string
 
 const (
+	// MemberStatusPendingVerification MemberStatus = "pending_verification" // Reverted
+	// MemberStatusPendingApproval     MemberStatus = "pending_approval"     // Reverted
 	MemberStatusActive     MemberStatus = "active"
 	MemberStatusInactive   MemberStatus = "inactive"
 	MemberStatusSuspended  MemberStatus = "suspended"
@@ -172,9 +178,13 @@ const (
 
 func MemberStatusValues() []MemberStatus {
 	return []MemberStatus{
+		// MemberStatusPendingVerification, // Reverted
+		// MemberStatusPendingApproval,     // Reverted
 		MemberStatusActive,
 		MemberStatusInactive,
 		MemberStatusSuspended,
 		MemberStatusTerminated,
 	}
 }
+
+// KYCStatus enum and KYCStatusValues function fully removed as per instruction to revert.

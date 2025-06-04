@@ -19,6 +19,12 @@ type AuthSessionDto struct {
 	IsRoot      bool              `json:"is_root"`
 	IsTenant    bool              `json:"is_tenant"`
 	AccessToken string            `json:"access_token"`
+
+	// Member-specific session fields
+	IsMember         *bool   `json:"is_member,omitempty"`
+	MembershipID     *string `json:"membership_id,omitempty"`
+	MembershipStatus *string `json:"membership_status,omitempty"`
+	KYCStatus        *string `json:"kyc_status,omitempty"`
 }
 
 type AuthTokenDto struct {
@@ -40,15 +46,30 @@ type AuthLoginData struct {
 	Keycode  string `json:"keycode" validate:"required"`
 }
 
+// AuthRegisterData is data for user registration
+// AuthRegisterData godoc
+// @Description AuthRegisterData is data for user registration
 type AuthRegisterData struct {
-	Username string `json:"username" validate:"required"`
-	Password string `json:"password" validate:"required"`
-	Keycode  string `json:"keycode" validate:"required"`
+	Keycode  string `json:"keycode" binding:"required" example:"tenant_A"`
+	Username string `json:"username" binding:"required,alphanum,min=3,max=30" example:"john_doe"`
+	Password string `json:"password" binding:"required,min=8,max=100" example:"SecurePassword123"`
 }
 
 type AuthChangePasswordData struct {
 	OldPassword string `json:"old_password" validate:"required"`
 	NewPassword string `json:"new_password" validate:"required"`
+}
+
+type MemberRegisterData struct {
+	Keycode     string `json:"keycode" binding:"required" example:"tenant_A"`
+	Username    string `json:"username" binding:"required,alphanum,min=3,max=30" example:"member_user"`
+	Password    string `json:"password" binding:"required,min=8,max=100" example:"SecurePassword123"`
+	Email       string `json:"email" binding:"required,email" example:"member@example.com"`
+	FirstName   string `json:"first_name" binding:"required" example:"John"`
+	LastName    string `json:"last_name" binding:"required" example:"Doe"`
+	DateOfBirth string `json:"date_of_birth" binding:"required" example:"1990-01-15"` // Expects YYYY-MM-DD format
+	Phone       string `json:"phone" binding:"required,e164" example:"+12125552368"`
+	// Add other fields like Address if they are collected at registration
 }
 
 type M map[string]any
