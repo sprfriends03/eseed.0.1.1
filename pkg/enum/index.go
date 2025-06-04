@@ -124,3 +124,57 @@ const (
 func DataActionValues() []DataAction {
 	return []DataAction{DataActionCreate, DataActionUpdate, DataActionDelete, DataActionResetPassword}
 }
+
+// PlantStatus represents the current status of a plant
+type PlantStatus string
+
+const (
+	PlantStatusGrowing   PlantStatus = "growing"
+	PlantStatusFlowering PlantStatus = "flowering"
+	PlantStatusHarvested PlantStatus = "harvested"
+	PlantStatusDormant   PlantStatus = "dormant"
+	PlantStatusDiseased  PlantStatus = "diseased"
+	PlantStatusDead      PlantStatus = "dead"
+)
+
+func PlantStatusValues() []PlantStatus {
+	return []PlantStatus{
+		PlantStatusGrowing,
+		PlantStatusFlowering,
+		PlantStatusHarvested,
+		PlantStatusDormant,
+		PlantStatusDiseased,
+		PlantStatusDead,
+	}
+}
+
+// NotificationStatus represents the current status of a notification
+type NotificationStatus string
+
+const (
+	NotificationStatusUnread NotificationStatus = "unread"
+	NotificationStatusRead   NotificationStatus = "read"
+)
+
+func NotificationStatusValues() []NotificationStatus {
+	return []NotificationStatus{NotificationStatusUnread, NotificationStatusRead}
+}
+
+// MemberStatus represents the current status of a club member
+type MemberStatus string
+
+const (
+	MemberStatusActive     MemberStatus = "active"
+	MemberStatusInactive   MemberStatus = "inactive"
+	MemberStatusSuspended  MemberStatus = "suspended"
+	MemberStatusTerminated MemberStatus = "terminated"
+)
+
+func MemberStatusValues() []MemberStatus {
+	return []MemberStatus{
+		MemberStatusActive,
+		MemberStatusInactive,
+		MemberStatusSuspended,
+		MemberStatusTerminated,
+	}
+}

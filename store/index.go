@@ -14,13 +14,13 @@ import (
 )
 
 type Store struct {
-	Db      *db.Db
+	Db      *db.DB
 	Rdb     *rdb.Rdb
 	Storage *storage.Storage
 }
 
 func New() *Store {
-	return &Store{db.New(), rdb.New(), storage.New()}
+	return &Store{db.Init(context.Background()), rdb.New(), storage.New()}
 }
 
 /** Client */

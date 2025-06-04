@@ -1,110 +1,163 @@
 package db
 
 import (
+	"context"
+	"time"
+
 	"app/env"
 	"app/pkg/encryption"
 	"app/pkg/enum"
 	"app/pkg/util"
-	"context"
-	"fmt"
-	"time"
 
 	"github.com/nhnghia272/gopkg"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/gridfs"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
-	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
+	"go.mongodb.org/mongo-driver/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
 
-type Db struct {
-	client          *mongo.Client
-	Bucket          *gridfs.Bucket
-	AuditLog        *audit_log
-	Client          *client
-	Role            *role
-	Tenant          *tenant
-	User            *user
-	Member          *member
-	Membership      *membership
-	PlantSlot       *plantSlot
-	Plant           *plant
-	CareRecord      *careRecord
-	Harvest         *harvest
-	PlantType       *plantType
-	SeasonalCatalog *seasonalCatalog
-	Payment         *payment
-	NFTRecord       *nftRecord
+var _db *DB
+
+// Define collections
+const (
+	userCollection         = "users"
+	roleCollection         = "roles"
+	memberCollection       = "members"
+	membershipCollection   = "memberships"
+	plantTypeCollection    = "plant_types"
+	plantSlotCollection    = "plant_slots"
+	plantCollection        = "plants"
+	careRecordCollection   = "care_records"
+	harvestCollection      = "harvests"
+	notificationCollection = "notifications"
+	tenantCollection       = "tenant"
+	clientCollection       = "client"
+	auditLogCollection     = "audit_log"
+)
+
+// DB represents the database layer
+type DB struct {
+	ctx    context.Context
+	client *mongo.Client
+
+	User         *user
+	Role         *role
+	Member       *member
+	Membership   *membership
+	PlantType    *plantType
+	PlantSlot    *plantSlot
+	Plant        *plant
+	CareRecord   *careRecord
+	Harvest      *harvest
+	Notification *notification
+	Tenant       *tenant
+	Client       *client
+	AuditLog     *audit_log
 }
 
-func New() *Db {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
+// Create a MongoDB client
+func createMongoClient(ctx context.Context) *mongo.Client {
+	uri := util.GetEnv("MONGODB_URI", "mongodb://localhost:27017")
+	dbName := util.GetEnv("MONGODB_DBNAME", "app")
+	connectTimeout := 10 * time.Second
 
-	conn, err := connstring.ParseAndValidate(env.MongoUri)
+	opts := options.Client().
+		ApplyURI(uri).
+		SetConnectTimeout(connectTimeout).
+		SetReadConcern(readconcern.Majority()).
+		SetWriteConcern(writeconcern.New(writeconcern.WMajority()))
+
+	client, err := mongo.Connect(ctx, opts)
 	if err != nil {
-		logrus.Fatalln("Mongo", err)
+		logrus.WithError(err).Fatalln("Failed to connect to MongoDB")
 	}
 
-	opts := &options.BSONOptions{UseJSONStructTags: true, NilMapAsEmpty: true, NilSliceAsEmpty: true, NilByteSliceAsEmpty: true}
-
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(conn.Original).SetBSONOptions(opts).SetReadPreference(readpref.SecondaryPreferred()))
+	err = client.Ping(ctx, nil)
 	if err != nil {
-		logrus.Fatalln("Mongo", err)
+		logrus.WithError(err).Fatalln("Failed to ping MongoDB")
 	}
 
-	err = client.Ping(ctx, readpref.Primary())
-	if err != nil {
-		logrus.Fatalln("Mongo", err)
-	}
-
-	mongodb := client.Database(conn.Database)
-
-	bucket, err := gridfs.NewBucket(mongodb)
-	if err != nil {
-		logrus.Fatalln("Mongo", err)
-	}
-
-	fmt.Printf("Mongo connected %v\n", env.MongoUri)
-
-	db := &Db{
-		client:          client,
-		Bucket:          bucket,
-		AuditLog:        newAuditLog(ctx, mongodb.Collection("audit_log")),
-		Client:          newClient(ctx, mongodb.Collection("client")),
-		Role:            newRole(ctx, mongodb.Collection("role")),
-		Tenant:          newTenant(ctx, mongodb.Collection("tenant")),
-		User:            newUser(ctx, mongodb.Collection("user")),
-		Member:          newMember(ctx, mongodb.Collection("member")),
-		Membership:      newMembership(ctx, mongodb.Collection("membership")),
-		PlantSlot:       newPlantSlot(ctx, mongodb.Collection("plant_slot")),
-		Plant:           newPlant(ctx, mongodb.Collection("plant")),
-		CareRecord:      newCareRecord(ctx, mongodb.Collection("care_record")),
-		Harvest:         newHarvest(ctx, mongodb.Collection("harvest")),
-		PlantType:       newPlantType(ctx, mongodb.Collection("plant_type")),
-		SeasonalCatalog: newSeasonalCatalog(ctx, mongodb.Collection("seasonal_catalog")),
-		Payment:         newPayment(ctx, mongodb.Collection("payment")),
-		NFTRecord:       newNFTRecord(ctx, mongodb.Collection("nft_record")),
-	}
-
-	return db.initialize(ctx)
+	logrus.Infoln("Connected to MongoDB at", uri, "using database", dbName)
+	return client
 }
 
-func (s Db) Uri() string {
+// Init initializes the database connections
+func Init(ctx context.Context) *DB {
+	client := createMongoClient(ctx)
+	db := client.Database(util.GetEnv("MONGODB_DBNAME", "app"))
+
+	_db = &DB{
+		ctx:          ctx,
+		client:       client,
+		User:         newUser(ctx, db.Collection(userCollection)),
+		Role:         newRole(ctx, db.Collection(roleCollection)),
+		Member:       newMember(ctx, db.Collection(memberCollection)),
+		Membership:   newMembership(ctx, db.Collection(membershipCollection)),
+		PlantType:    newPlantType(ctx, db.Collection(plantTypeCollection)),
+		PlantSlot:    newPlantSlot(ctx, db.Collection(plantSlotCollection)),
+		Plant:        newPlant(ctx, db.Collection(plantCollection)),
+		CareRecord:   newCareRecord(ctx, db.Collection(careRecordCollection)),
+		Harvest:      newHarvest(ctx, db.Collection(harvestCollection)),
+		Notification: newNotification(ctx, db.Collection(notificationCollection)),
+		Tenant:       newTenant(ctx, db.Collection(tenantCollection)),
+		Client:       newClient(ctx, db.Collection(clientCollection)),
+		AuditLog:     newAuditLog(ctx, db.Collection(auditLogCollection)),
+	}
+
+	return _db
+}
+
+// Get returns the database instance
+func Get() *DB {
+	return _db
+}
+
+// Close closes the database connection
+func (db *DB) Close() {
+	if db.client != nil {
+		if err := db.client.Disconnect(db.ctx); err != nil {
+			logrus.WithError(err).Warningln("Error disconnecting from MongoDB")
+		}
+	}
+}
+
+// SID converts an ObjectID to string
+func SID(id primitive.ObjectID) string {
+	return id.Hex()
+}
+
+// OID converts a string to an ObjectID
+func OID(id string) primitive.ObjectID {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return primitive.NilObjectID
+	}
+	return objID
+}
+
+// Regex creates a case-insensitive regex pattern for MongoDB queries
+func Regex(s string) primitive.Regex {
+	return primitive.Regex{
+		Pattern: ".*" + s + ".*",
+		Options: "i",
+	}
+}
+
+func (s DB) Uri() string {
 	return env.MongoUri
 }
 
-func (s Db) Instance() *mongo.Client {
+func (s DB) Instance() *mongo.Client {
 	return s.client
 }
 
-func (s Db) Session() (mongo.Session, error) {
+func (s DB) Session() (mongo.Session, error) {
 	return s.client.StartSession()
 }
 
-func (s *Db) initialize(ctx context.Context) *Db {
+func (s *DB) initialize(ctx context.Context) *DB {
 	tenant := &TenantDomain{
 		Name:       gopkg.Pointer(env.RootUser),
 		Keycode:    gopkg.Pointer(env.RootUser),
@@ -140,21 +193,8 @@ func (s *Db) initialize(ctx context.Context) *Db {
 	return s
 }
 
-func Regex(v string) M {
-	return M{"$regex": v, "$options": "sim"}
-}
-
-func OID(id string) primitive.ObjectID {
-	oid, _ := primitive.ObjectIDFromHex(id)
-	return oid
-}
-
 func OIDs(ids []string) []primitive.ObjectID {
 	return gopkg.MapFunc(ids, func(id string) primitive.ObjectID { return OID(id) })
-}
-
-func SID(oid primitive.ObjectID) string {
-	return oid.Hex()
 }
 
 func SIDs(oids []primitive.ObjectID) []string {

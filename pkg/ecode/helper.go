@@ -13,6 +13,197 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// errorMessages maps error codes to their user-friendly messages
+var errorMessages = make(map[int]string)
+
+// RegisterError registers a new error code and its associated message
+func RegisterError(code int, message string) {
+	if _, exists := errorMessages[code]; exists {
+		logrus.Warnf("Error code %d already registered, overwriting", code)
+	}
+	errorMessages[code] = message
+}
+
+// GetMessage returns the message associated with an error code
+func GetMessage(code int) string {
+	if message, ok := errorMessages[code]; ok {
+		return message
+	}
+	return fmt.Sprintf("Unknown error (code: %d)", code)
+}
+
+// NewWithContext creates a new cannabis-specific error with context
+func NewWithContext(code int, contextStr string) *Error {
+	message := GetMessage(code)
+	if contextStr != "" {
+		message = fmt.Sprintf("%s: %s", message, contextStr)
+	}
+
+	err := New(500, message)
+	err.ErrCode = fmt.Sprintf("%d", code) // Store code as string in ErrCode
+	stackTrace := captureStack()
+	err.ErrStack = stackTrace // Store stack in ErrStack
+	// Store context in ErrDesc if empty
+	if err.ErrDesc == "" {
+		err.ErrDesc = contextStr
+	}
+
+	return err
+}
+
+// Newf creates a new formatted cannabis-specific error
+func Newf(code int, format string, args ...interface{}) *Error {
+	message := GetMessage(code)
+	contextMsg := fmt.Sprintf(format, args...)
+	fullMessage := fmt.Sprintf("%s: %s", message, contextMsg)
+
+	err := New(500, fullMessage)
+	err.ErrCode = fmt.Sprintf("%d", code)
+	stackTrace := captureStack()
+	err.ErrStack = stackTrace
+
+	return err
+}
+
+// WrapError wraps an existing error with a cannabis-specific error code
+func WrapError(code int, origErr error, contextStr string) *Error {
+	if origErr == nil {
+		return nil
+	}
+
+	message := GetMessage(code)
+	if contextStr != "" {
+		message = fmt.Sprintf("%s: %s", message, contextStr)
+	}
+
+	wrappedErr := New(500, fmt.Sprintf("%s: %v", message, origErr))
+	wrappedErr.ErrCode = fmt.Sprintf("%d", code)
+	wrappedErr.ErrStack = captureStack()
+	wrappedErr.ErrDesc = contextStr
+
+	// Add original error info to description
+	if wrappedErr.ErrDesc != "" {
+		wrappedErr.ErrDesc = fmt.Sprintf("%s (caused by: %v)", wrappedErr.ErrDesc, origErr)
+	} else {
+		wrappedErr.ErrDesc = fmt.Sprintf("caused by: %v", origErr)
+	}
+
+	return wrappedErr
+}
+
+// WrapErrorf wraps an existing error with a cannabis-specific error code and formatted context
+func WrapErrorf(code int, origErr error, format string, args ...interface{}) *Error {
+	if origErr == nil {
+		return nil
+	}
+
+	message := GetMessage(code)
+	contextMsg := fmt.Sprintf(format, args...)
+	fullMessage := fmt.Sprintf("%s: %s", message, contextMsg)
+
+	wrappedErr := New(500, fmt.Sprintf("%s: %v", fullMessage, origErr))
+	wrappedErr.ErrCode = fmt.Sprintf("%d", code)
+	wrappedErr.ErrStack = captureStack()
+	wrappedErr.ErrDesc = contextMsg
+
+	// Add original error info to description
+	if wrappedErr.ErrDesc != "" {
+		wrappedErr.ErrDesc = fmt.Sprintf("%s (caused by: %v)", wrappedErr.ErrDesc, origErr)
+	} else {
+		wrappedErr.ErrDesc = fmt.Sprintf("caused by: %v", origErr)
+	}
+
+	return wrappedErr
+}
+
+// IsCode checks if the given error has the specified code
+func IsCode(err error, code int) bool {
+	if err == nil {
+		return false
+	}
+	if codeErr, ok := err.(*Error); ok {
+		return codeErr.ErrCode == fmt.Sprintf("%d", code)
+	}
+	return false
+}
+
+// LogError logs an error with its details to logrus
+func LogError(err error) {
+	if err == nil {
+		return
+	}
+
+	if codeErr, ok := err.(*Error); ok {
+		fields := logrus.Fields{
+			"error_code": codeErr.ErrCode,
+		}
+
+		if codeErr.ErrDesc != "" {
+			fields["context"] = codeErr.ErrDesc
+		}
+
+		if codeErr.ErrStack != "" {
+			fields["stack"] = codeErr.ErrStack
+		}
+
+		logrus.WithFields(fields).Error(codeErr.Error())
+	} else {
+		logrus.Error(err)
+	}
+}
+
+// LogWithFields logs an error with additional fields
+func LogWithFields(err error, fields logrus.Fields) {
+	if err == nil {
+		return
+	}
+
+	if codeErr, ok := err.(*Error); ok {
+		fields["error_code"] = codeErr.ErrCode
+
+		if codeErr.ErrDesc != "" {
+			fields["context"] = codeErr.ErrDesc
+		}
+
+		if codeErr.ErrStack != "" {
+			fields["stack"] = codeErr.ErrStack
+		}
+
+		logrus.WithFields(fields).Error(codeErr.Error())
+	} else {
+		logrus.WithFields(fields).Error(err)
+	}
+}
+
+// captureStack captures the current stack trace
+func captureStack() string {
+	const depth = 32
+	var pcs [depth]uintptr
+	n := runtime.Callers(3, pcs[:])
+	frames := runtime.CallersFrames(pcs[:n])
+
+	var builder strings.Builder
+	builder.WriteString("Stack Trace:\n")
+
+	for {
+		frame, more := frames.Next()
+		if !strings.Contains(frame.File, "github.com") && !strings.Contains(frame.File, "app/") {
+			// Skip standard library frames
+			if more {
+				continue
+			}
+			break
+		}
+
+		builder.WriteString(fmt.Sprintf("%s:%d %s\n", frame.File, frame.Line, frame.Function))
+		if !more {
+			break
+		}
+	}
+
+	return builder.String()
+}
+
 // WithContext wraps an error with context information from the trace context
 func WithContext(ctx context.Context, err error) error {
 	if err == nil {
@@ -59,33 +250,6 @@ func WithStack(err error) error {
 
 	// Otherwise wrap with InternalServerError
 	return InternalServerError.Stack(fmt.Errorf("%v (at %s:%d in %s)", err, file, line, callerInfo))
-}
-
-// LogError logs the error with appropriate level and returns the error for chaining
-func LogError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	// Format error for logging
-	errorJSON := formatErrorForLog(err)
-
-	// Log based on HTTP status if it's our error type
-	if e, ok := err.(*Error); ok {
-		switch {
-		case e.Status >= 500:
-			logrus.WithField("error_details", errorJSON).Error(e.Error())
-		case e.Status >= 400:
-			logrus.WithField("error_details", errorJSON).Warn(e.Error())
-		default:
-			logrus.WithField("error_details", errorJSON).Info(e.Error())
-		}
-		return e
-	}
-
-	// Generic error
-	logrus.WithField("error_details", errorJSON).Error(err.Error())
-	return err
 }
 
 // LogErrorWithContext logs the error with context and returns the error for chaining
