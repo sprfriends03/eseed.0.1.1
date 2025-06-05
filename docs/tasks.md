@@ -36,6 +36,34 @@ This task involves extending the existing authentication system to support membe
 - Expected duration: 1-2 weeks
 - Target completion: [TBD]
 
+### Task 1.3: Member Management
+
+The detailed implementation plan is in [tasks.1.3.md](tasks.1.3.md).
+
+#### Overview
+This task focuses on developing the backend functionalities for member registration and profile management. It includes creating APIs for member sign-up with necessary validations and for members to manage their profiles, ensuring data integrity and privacy.
+
+#### Key Implementation Areas
+1. **Member Registration API:**
+   - Input validation (name, email, password, DOB)
+   - Duplicate detection (e.g., email)
+   - Email verification (sending link/code, confirmation)
+   - Age verification (18+)
+2. **Profile Management API:**
+   - CRUD operations for member profiles
+   - Data validation for profile updates
+   - Privacy controls for profile information visibility
+
+#### Dependencies
+- Authentication System (Task 1.2)
+- Email service integration
+- Data encryption setup
+- `Members` collection schema defined (Task 1.1.2.1)
+
+#### Timeline
+- Expected duration: 1-2 weeks
+- Target completion: [TBD]
+
 ## Completed Tasks
 
 ### Task 1.1: Core Infrastructure Setup
