@@ -255,7 +255,7 @@ func (s middleware) RequireKYCStatus(requiredStatus string) gin.HandlerFunc {
 
 		if *session.KYCStatus != requiredStatus {
 			formattedMsg := fmt.Sprintf("Action requires KYC status '%s', but current status is '%s'.", requiredStatus, *session.KYCStatus)
-			c.Error(ecode.New(http.StatusForbidden, "kyc_status_insufficient").Desc(fmt.Errorf(formattedMsg)))
+			c.Error(ecode.New(http.StatusForbidden, "kyc_status_insufficient").Desc(fmt.Errorf("%s", formattedMsg)))
 			c.Abort()
 			return
 		}
@@ -287,7 +287,7 @@ func (s middleware) RequireMembershipStatus(requiredStatus string) gin.HandlerFu
 		// Compare MembershipStatus with the required status
 		if *session.MembershipStatus != requiredStatus {
 			formattedMsg := fmt.Sprintf("Action requires membership status '%s', but current status is '%s'.", requiredStatus, *session.MembershipStatus)
-			c.Error(ecode.New(http.StatusForbidden, "membership_status_insufficient").Desc(fmt.Errorf(formattedMsg)))
+			c.Error(ecode.New(http.StatusForbidden, "membership_status_insufficient").Desc(fmt.Errorf("%s", formattedMsg)))
 			c.Abort()
 			return
 		}

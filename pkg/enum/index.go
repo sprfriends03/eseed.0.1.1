@@ -52,6 +52,12 @@ const (
 	PermissionTenantView   Permission = "tenant_view"
 	PermissionTenantCreate Permission = "tenant_create"
 	PermissionTenantUpdate Permission = "tenant_update"
+
+	// Self-service permissions
+	PermissionUserViewSelf    Permission = "user_view_self"
+	PermissionUserUpdateSelf  Permission = "user_update_self"
+	PermissionUserDeleteSelf  Permission = "user_delete_self"
+	PermissionUserPrivacySelf Permission = "user_privacy_self"
 )
 
 func PermissionTenantValues() []Permission {
@@ -70,6 +76,12 @@ func PermissionTenantValues() []Permission {
 		PermissionUserView,
 		PermissionUserCreate,
 		PermissionUserUpdate,
+
+		// Self-service permissions
+		PermissionUserViewSelf,
+		PermissionUserUpdateSelf,
+		PermissionUserDeleteSelf,
+		PermissionUserPrivacySelf,
 	}
 	return gopkg.UniqueFunc(slices.Sorted(slices.Values(permissions)), func(e Permission) Permission { return e })
 }
@@ -94,6 +106,12 @@ func PermissionRootValues() []Permission {
 		PermissionTenantView,
 		PermissionTenantCreate,
 		PermissionTenantUpdate,
+
+		// Self-service permissions
+		PermissionUserViewSelf,
+		PermissionUserUpdateSelf,
+		PermissionUserDeleteSelf,
+		PermissionUserPrivacySelf,
 	}
 	return gopkg.UniqueFunc(slices.Sorted(slices.Values(permissions)), func(e Permission) Permission { return e })
 }

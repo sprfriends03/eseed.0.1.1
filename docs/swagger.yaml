@@ -144,6 +144,95 @@ definitions:
   db.M:
     additionalProperties: {}
     type: object
+  db.PrivacySettings:
+    properties:
+      is_public:
+        type: boolean
+      show_date_of_birth:
+        type: boolean
+      show_email:
+        type: boolean
+      show_name:
+        type: boolean
+      show_phone:
+        type: boolean
+      show_profile_picture:
+        type: boolean
+    type: object
+  db.UserProfileDto:
+    properties:
+      date_of_birth:
+        type: string
+        format: date-time
+      email:
+        example: aloha@email.com
+        type: string
+      email_verified:
+        type: boolean
+      email_verified_at:
+        type: string
+        format: date-time
+      name:
+        example: Aloha
+        type: string
+      phone:
+        example: 0973123456
+        type: string
+      privacy_preferences:
+        $ref: '#/definitions/db.PrivacySettings'
+      profile_picture:
+        type: string
+      user_id:
+        example: 671db9eca1f1b1bdbf3d4618
+        type: string
+      username:
+        example: aloha
+        type: string
+    type: object
+  db.UserProfileUpdateData:
+    properties:
+      date_of_birth:
+        type: string
+        format: date-time
+      email:
+        example: aloha@email.com
+        type: string
+      name:
+        example: Aloha
+        type: string
+      phone:
+        example: 0973123456
+        type: string
+      profile_picture:
+        type: string
+    required:
+    - date_of_birth
+    - email
+    - name
+    - phone
+    type: object
+  db.UserPrivacyUpdateData:
+    properties:
+      is_public:
+        type: boolean
+      show_date_of_birth:
+        type: boolean
+      show_email:
+        type: boolean
+      show_name:
+        type: boolean
+      show_phone:
+        type: boolean
+      show_profile_picture:
+        type: boolean
+    required:
+    - is_public
+    - show_date_of_birth
+    - show_email
+    - show_name
+    - show_phone
+    - show_profile_picture
+    type: object
   db.RoleCmsData:
     properties:
       data_status:
@@ -462,6 +551,158 @@ paths:
       summary: Register
       tags:
       - Auth
+  /profile/v1:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.UserProfileDto'
+      security:
+      - BearerAuth: []
+      summary: Get User Profile
+      tags:
+      - Profile
+    put:
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.UserProfileUpdateData'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.UserProfileDto'
+      security:
+      - BearerAuth: []
+      summary: Update User Profile
+      tags:
+      - Profile
+  /profile/v1/privacy:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.PrivacySettings'
+      security:
+      - BearerAuth: []
+      summary: Get Privacy Settings
+      tags:
+      - Profile
+    put:
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.UserPrivacyUpdateData'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.PrivacySettings'
+      security:
+      - BearerAuth: []
+      summary: Update Privacy Settings
+      tags:
+      - Profile
+  /profile/v1/picture:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Profile picture image file
+        in: formData
+        name: file
+        required: true
+        type: file
+      responses:
+        "200":
+          description: Profile picture uploaded successfully
+          schema:
+            properties:
+              message:
+                type: string
+              profile_picture:
+                type: string
+            type: object
+        "400":
+          description: Bad Request - Invalid file format or size
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "500":
+          description: Internal Server Error - Upload failed
+      security:
+      - BearerAuth: []
+      summary: Upload Profile Picture
+      tags:
+      - Profile
+    delete:
+      responses:
+        "200":
+          description: Profile picture deleted successfully
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "404":
+          description: Not Found - User not found
+      security:
+      - BearerAuth: []
+      summary: Delete Profile Picture
+      tags:
+      - Profile
+  /profile/v1/public/{user_id}:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/db.UserProfileDto'
+        "403":
+          description: Forbidden - Profile is not public
+        "404":
+          description: Not Found - User not found
+      summary: Get Public Profile
+      tags:
+      - Profile
+  /profile/v1/account:
+    delete:
+      responses:
+        "200":
+          description: Account deleted successfully
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Root users cannot delete their accounts
+        "404":
+          description: Not Found - User not found
+        "500":
+          description: Internal Server Error - Deletion failed
+      security:
+      - BearerAuth: []
+      summary: Delete User Account
+      tags:
+      - Profile
   /cms/v1/auditlogs:
     get:
       parameters:

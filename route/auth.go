@@ -298,12 +298,32 @@ func (s auth) v1_MemberRegister() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		data := &db.MemberRegisterData{}
 		if err := c.ShouldBindJSON(data); err != nil {
-			// Wrap binding/validation error in a standard BadRequest ecode
 			c.Error(ecode.BadRequest.Desc(err))
 			return
 		}
 
 		ctx := c.Request.Context()
+
+		// Parse date of birth from string
+		dob, err := time.Parse("2006-01-02", data.DateOfBirth)
+		if err != nil {
+			c.Error(ecode.New(http.StatusBadRequest, "invalid_date_format").Desc(fmt.Errorf("DateOfBirth must be in YYYY-MM-DD format")))
+			return
+		}
+
+		// Age verification - check if user is 18 years or older
+		today := time.Now()
+		age := today.Year() - dob.Year()
+
+		// If birthday hasn't occurred yet this year, subtract 1
+		if today.Month() < dob.Month() || (today.Month() == dob.Month() && today.Day() < dob.Day()) {
+			age--
+		}
+
+		if age < 18 {
+			c.Error(ecode.New(http.StatusForbidden, "age_verification_failed").Desc(fmt.Errorf("Members must be 18 years or older to register")))
+			return
+		}
 
 		tenant, err := s.store.Db.Tenant.FindOneByKeycode(ctx, data.Keycode)
 		if err != nil {
@@ -311,12 +331,6 @@ func (s auth) v1_MemberRegister() gin.HandlerFunc {
 			return
 		}
 		tenantID := enum.Tenant(db.SID(tenant.ID))
-
-		dob, err := time.Parse("2006-01-02", data.DateOfBirth)
-		if err != nil {
-			c.Error(ecode.New(http.StatusBadRequest, "invalid_date_format").Desc(fmt.Errorf("DateOfBirth must be in YYYY-MM-DD format.")))
-			return
-		}
 
 		userDomain := &db.UserDomain{
 			Username:      gopkg.Pointer(data.Username),
@@ -326,6 +340,7 @@ func (s auth) v1_MemberRegister() gin.HandlerFunc {
 			DataStatus:    gopkg.Pointer(enum.DataStatusEnable),
 			IsRoot:        gopkg.Pointer(false),
 			EmailVerified: gopkg.Pointer(false),
+			DateOfBirth:   &dob, // Set the date of birth
 		}
 
 		savedUser, err := s.store.Db.User.Save(ctx, userDomain)
@@ -552,9 +567,11 @@ func (s auth) v1_VerifyMemberEmail() gin.HandlerFunc {
 			return
 		}
 
+		now := time.Now()
 		user.EmailVerified = gopkg.Pointer(true)
 		user.EmailVerificationToken = nil          // Clear token after use
 		user.EmailVerificationTokenExpiresAt = nil // Clear expiry after use
+		user.EmailVerifiedAt = &now                // Set verification timestamp
 
 		updatedUser, err := s.store.Db.User.Save(ctx, user) // Save changes
 		if err != nil {

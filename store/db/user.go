@@ -29,6 +29,20 @@ type UserDomain struct {
 	EmailVerified                   *bool            `json:"email_verified,omitempty" bson:"email_verified,omitempty"`
 	EmailVerificationToken          *string          `json:"-" bson:"email_verification_token,omitempty"`
 	EmailVerificationTokenExpiresAt *time.Time       `json:"-" bson:"email_verification_token_expires_at,omitempty"`
+	DateOfBirth                     *time.Time       `json:"date_of_birth,omitempty" bson:"date_of_birth,omitempty" validate:"omitempty"`
+	EmailVerifiedAt                 *time.Time       `json:"email_verified_at,omitempty" bson:"email_verified_at,omitempty"`
+	PrivacyPreferences              *PrivacySettings `json:"privacy_preferences,omitempty" bson:"privacy_preferences,omitempty" validate:"omitempty"`
+	ProfilePicture                  *string          `json:"profile_picture,omitempty" bson:"profile_picture,omitempty" validate:"omitempty"`
+}
+
+// Privacy settings for user profile
+type PrivacySettings struct {
+	ShowEmail          *bool `json:"show_email,omitempty" bson:"show_email,omitempty" validate:"omitempty"`
+	ShowPhone          *bool `json:"show_phone,omitempty" bson:"show_phone,omitempty" validate:"omitempty"`
+	ShowDateOfBirth    *bool `json:"show_date_of_birth,omitempty" bson:"show_date_of_birth,omitempty" validate:"omitempty"`
+	ShowName           *bool `json:"show_name,omitempty" bson:"show_name,omitempty" validate:"omitempty"`
+	ShowProfilePicture *bool `json:"show_profile_picture,omitempty" bson:"show_profile_picture,omitempty" validate:"omitempty"`
+	IsPublic           *bool `json:"is_public,omitempty" bson:"is_public,omitempty" validate:"omitempty"`
 }
 
 func (s *UserDomain) Validate() error {
@@ -51,18 +65,29 @@ func (s UserDomain) CmsDto() *UserCmsDto {
 }
 
 func (s *UserDomain) Cache() *UserCache {
+	// Create a cache object for privacy settings if it exists
+	var privacySettings *PrivacySettings
+	if s.PrivacyPreferences != nil {
+		privacySettings = s.PrivacyPreferences
+	}
+
 	return &UserCache{
-		ID:           SID(s.ID),
-		Name:         gopkg.Value(s.Name),
-		Phone:        gopkg.Value(s.Phone),
-		Email:        gopkg.Value(s.Email),
-		Username:     gopkg.Value(s.Username),
-		DataStatus:   gopkg.Value(s.DataStatus),
-		RoleIds:      gopkg.Value(s.RoleIds),
-		IsRoot:       gopkg.Value(s.IsRoot),
-		TenantId:     gopkg.Value(s.TenantId),
-		VersionToken: gopkg.Value(s.VersionToken),
-		Permissions:  make([]enum.Permission, 0),
+		ID:              SID(s.ID),
+		Name:            gopkg.Value(s.Name),
+		Phone:           gopkg.Value(s.Phone),
+		Email:           gopkg.Value(s.Email),
+		Username:        gopkg.Value(s.Username),
+		DataStatus:      gopkg.Value(s.DataStatus),
+		RoleIds:         gopkg.Value(s.RoleIds),
+		IsRoot:          gopkg.Value(s.IsRoot),
+		TenantId:        gopkg.Value(s.TenantId),
+		VersionToken:    gopkg.Value(s.VersionToken),
+		Permissions:     make([]enum.Permission, 0),
+		EmailVerified:   gopkg.Value(s.EmailVerified),
+		EmailVerifiedAt: s.EmailVerifiedAt,
+		DateOfBirth:     s.DateOfBirth,
+		PrivacySettings: privacySettings,
+		ProfilePicture:  gopkg.Value(s.ProfilePicture),
 	}
 }
 
@@ -79,18 +104,23 @@ type UserCmsDto struct {
 }
 
 type UserCache struct {
-	ID           string            `json:"user_id"`
-	Name         string            `json:"name"`
-	Phone        string            `json:"phone"`
-	Email        string            `json:"email"`
-	Username     string            `json:"username"`
-	DataStatus   enum.DataStatus   `json:"data_status"`
-	RoleIds      []string          `json:"role_ids"`
-	IsRoot       bool              `json:"is_root"`
-	TenantId     enum.Tenant       `json:"tenant_id"`
-	VersionToken int64             `json:"version_token"`
-	IsTenant     bool              `json:"is_tenant"`
-	Permissions  []enum.Permission `json:"permissions"`
+	ID              string            `json:"user_id"`
+	Name            string            `json:"name"`
+	Phone           string            `json:"phone"`
+	Email           string            `json:"email"`
+	Username        string            `json:"username"`
+	DataStatus      enum.DataStatus   `json:"data_status"`
+	RoleIds         []string          `json:"role_ids"`
+	IsRoot          bool              `json:"is_root"`
+	TenantId        enum.Tenant       `json:"tenant_id"`
+	VersionToken    int64             `json:"version_token"`
+	IsTenant        bool              `json:"is_tenant"`
+	Permissions     []enum.Permission `json:"permissions"`
+	EmailVerified   bool              `json:"email_verified"`
+	EmailVerifiedAt *time.Time        `json:"email_verified_at,omitempty"`
+	DateOfBirth     *time.Time        `json:"date_of_birth,omitempty"`
+	PrivacySettings *PrivacySettings  `json:"privacy_preferences,omitempty"`
+	ProfilePicture  string            `json:"profile_picture,omitempty"`
 }
 
 type UserCmsData struct {
@@ -232,4 +262,111 @@ func (s user) FindOneByEmailVerificationToken(ctx context.Context, token string)
 
 func (s user) IncrementVersionToken(ctx context.Context, id string) error {
 	return s.repo.UpdateOne(ctx, M{"_id": OID(id)}, M{"$inc": M{"version_token": 1}})
+}
+
+// UserProfileDto for profile view
+type UserProfileDto struct {
+	ID              string           `json:"user_id" example:"671db9eca1f1b1bdbf3d4618"`
+	Name            string           `json:"name,omitempty" example:"Aloha"`
+	Phone           string           `json:"phone,omitempty" example:"0973123456"`
+	Email           string           `json:"email,omitempty" example:"aloha@email.com"`
+	Username        string           `json:"username" example:"aloha"`
+	DateOfBirth     *time.Time       `json:"date_of_birth,omitempty"`
+	EmailVerified   bool             `json:"email_verified"`
+	EmailVerifiedAt *time.Time       `json:"email_verified_at,omitempty"`
+	PrivacySettings *PrivacySettings `json:"privacy_preferences,omitempty"`
+	ProfilePicture  string           `json:"profile_picture,omitempty"`
+}
+
+// Convert UserDomain to UserProfileDto with privacy settings applied
+func (s UserDomain) ProfileDto(applyPrivacy bool) *UserProfileDto {
+	profileDto := &UserProfileDto{
+		ID:              SID(s.ID),
+		Username:        gopkg.Value(s.Username),
+		EmailVerified:   gopkg.Value(s.EmailVerified),
+		EmailVerifiedAt: s.EmailVerifiedAt,
+	}
+
+	// Apply privacy settings if requested and available
+	if applyPrivacy && s.PrivacyPreferences != nil {
+		privacySettings := s.PrivacyPreferences
+
+		if privacySettings.ShowEmail != nil && *privacySettings.ShowEmail {
+			profileDto.Email = gopkg.Value(s.Email)
+		}
+
+		if privacySettings.ShowPhone != nil && *privacySettings.ShowPhone {
+			profileDto.Phone = gopkg.Value(s.Phone)
+		}
+
+		if privacySettings.ShowName != nil && *privacySettings.ShowName {
+			profileDto.Name = gopkg.Value(s.Name)
+		}
+
+		if privacySettings.ShowDateOfBirth != nil && *privacySettings.ShowDateOfBirth {
+			profileDto.DateOfBirth = s.DateOfBirth
+		}
+
+		if privacySettings.ShowProfilePicture != nil && *privacySettings.ShowProfilePicture {
+			profileDto.ProfilePicture = gopkg.Value(s.ProfilePicture)
+		}
+	} else {
+		// If not applying privacy or no settings, show all fields for self-view
+		profileDto.Email = gopkg.Value(s.Email)
+		profileDto.Phone = gopkg.Value(s.Phone)
+		profileDto.Name = gopkg.Value(s.Name)
+		profileDto.DateOfBirth = s.DateOfBirth
+		profileDto.PrivacySettings = s.PrivacyPreferences
+		profileDto.ProfilePicture = gopkg.Value(s.ProfilePicture)
+	}
+
+	return profileDto
+}
+
+// UserProfileUpdateData for profile updates
+type UserProfileUpdateData struct {
+	Name           string     `json:"name" validate:"required" example:"Aloha"`
+	Phone          string     `json:"phone" validate:"required,lowercase" example:"0973123456"`
+	Email          string     `json:"email" validate:"required,lowercase,email" example:"aloha@email.com"`
+	DateOfBirth    *time.Time `json:"date_of_birth" validate:"required"`
+	ProfilePicture string     `json:"profile_picture,omitempty"`
+}
+
+// Apply updates to UserDomain
+func (s UserProfileUpdateData) Domain(domain *UserDomain) *UserDomain {
+	domain.Name = gopkg.Pointer(s.Name)
+	domain.Phone = gopkg.Pointer(s.Phone)
+	domain.Email = gopkg.Pointer(s.Email)
+	domain.DateOfBirth = s.DateOfBirth
+	if s.ProfilePicture != "" {
+		domain.ProfilePicture = gopkg.Pointer(s.ProfilePicture)
+	}
+	return domain
+}
+
+// UserPrivacyUpdateData for privacy setting updates
+type UserPrivacyUpdateData struct {
+	ShowEmail          bool `json:"show_email" validate:"required"`
+	ShowPhone          bool `json:"show_phone" validate:"required"`
+	ShowDateOfBirth    bool `json:"show_date_of_birth" validate:"required"`
+	ShowName           bool `json:"show_name" validate:"required"`
+	ShowProfilePicture bool `json:"show_profile_picture" validate:"required"`
+	IsPublic           bool `json:"is_public" validate:"required"`
+}
+
+// Apply privacy updates to UserDomain
+func (s UserPrivacyUpdateData) Domain(domain *UserDomain) *UserDomain {
+	// Create privacy settings object if it doesn't exist
+	if domain.PrivacyPreferences == nil {
+		domain.PrivacyPreferences = &PrivacySettings{}
+	}
+
+	domain.PrivacyPreferences.ShowEmail = gopkg.Pointer(s.ShowEmail)
+	domain.PrivacyPreferences.ShowPhone = gopkg.Pointer(s.ShowPhone)
+	domain.PrivacyPreferences.ShowDateOfBirth = gopkg.Pointer(s.ShowDateOfBirth)
+	domain.PrivacyPreferences.ShowName = gopkg.Pointer(s.ShowName)
+	domain.PrivacyPreferences.ShowProfilePicture = gopkg.Pointer(s.ShowProfilePicture)
+	domain.PrivacyPreferences.IsPublic = gopkg.Pointer(s.IsPublic)
+
+	return domain
 }

@@ -129,13 +129,15 @@ func GetTestDBContext() (context.Context, *mongo.Database) {
 		logrus.Fatal("Test database not initialized. Call Setup() first.")
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	return ctx, testDB
 }
 
 // CreateTestTenant creates a test tenant for testing
 func CreateTestTenant() (enum.Tenant, error) {
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
 	id := primitive.NewObjectID()
 	tenant := &db.TenantDomain{

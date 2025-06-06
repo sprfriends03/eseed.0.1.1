@@ -211,3 +211,44 @@ func (s Storage) DownloadFromTypeBucket(ctx context.Context, fileType, objectNam
 	bucket := s.GetBucketForType(fileType)
 	return s.client.GetObject(ctx, bucket, objectName, minio.GetObjectOptions{})
 }
+
+// UploadProfileImage uploads a profile image to the profile-images bucket
+func (s Storage) UploadProfileImage(ctx context.Context, reader io.Reader, filename string) (string, error) {
+	// Generate unique filename with timestamp
+	objectName := fmt.Sprintf("%d-%s", time.Now().Unix(), filename)
+
+	// Get file size by reading into memory (for small profile images this is acceptable)
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		return "", err
+	}
+
+	// Create new reader from data
+	newReader := strings.NewReader(string(data))
+	objectSize := int64(len(data))
+
+	// Determine content type from filename extension
+	contentType := "application/octet-stream"
+	if strings.HasSuffix(strings.ToLower(filename), ".jpg") || strings.HasSuffix(strings.ToLower(filename), ".jpeg") {
+		contentType = "image/jpeg"
+	} else if strings.HasSuffix(strings.ToLower(filename), ".png") {
+		contentType = "image/png"
+	} else if strings.HasSuffix(strings.ToLower(filename), ".gif") {
+		contentType = "image/gif"
+	} else if strings.HasSuffix(strings.ToLower(filename), ".webp") {
+		contentType = "image/webp"
+	}
+
+	_, err = s.UploadToTypeBucket(ctx, "profile", objectName, newReader, objectSize, contentType)
+	if err != nil {
+		return "", err
+	}
+
+	return objectName, nil
+}
+
+// DeleteProfileImage deletes a profile image from the profile-images bucket
+func (s Storage) DeleteProfileImage(ctx context.Context, objectName string) error {
+	bucket := s.GetBucketForType("profile")
+	return s.client.RemoveObject(ctx, bucket, objectName, minio.RemoveObjectOptions{})
+}

@@ -100,8 +100,6 @@ github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9G
 github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
 github.com/montanaflynn/stats v0.7.1 h1:etflOAAHORrCC44V+aR6Ftzort912ZU+YLiSTuV8eaE=
 github.com/montanaflynn/stats v0.7.1/go.mod h1:etXPPgVO6n31NxCd9KQUMvCM+ve0ruNzt6R8Bnaayow=
-github.com/nhnghia272/gopkg v1.0.0 h1:rKfQwFDUOLq3D4NnQGD3XKh7PUcjqltAybKXjEidtA4=
-github.com/nhnghia272/gopkg v1.0.0/go.mod h1:UH3iIZdNoPlS/RUsBDU/GO8mYhAK5DVZQUJXr/JqjIk=
 github.com/nhnghia272/gopkg v1.0.35 h1:rCrRN9q499zIqbiZjkJS/1HVS9dTPXcbINW+hlpsSOU=
 github.com/nhnghia272/gopkg v1.0.35/go.mod h1:fv1zOhU0wjoLq8P/AfJP/rXytOoAi5me6aoB46MWNQk=
 github.com/pelletier/go-toml/v2 v2.2.3 h1:YmeHyLY8mFWbdkNWwpr+qIL2bEqT0o95WSdkNHvL12M=
