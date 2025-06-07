@@ -362,6 +362,140 @@ func (s *PaymentService) CreatePaymentIntent(ctx context.Context, req *PaymentIn
 }
 ```
 
+4. **KYCService** (new, following existing patterns):
+```go
+type KYCService struct {
+    store   *store.Store
+    storage *storage.Storage
+    mail    *mail.Mail
+}
+
+func (s *KYCService) UploadDocument(ctx context.Context, req *UploadDocumentRequest) (*KYCDocument, error) {
+    // Validate file using existing storage patterns
+    if err := s.storage.ValidateKYCFile(req.Filename, req.FileSize, req.FileContent); err != nil {
+        return nil, ecode.ValidationError.Desc(err)
+    }
+
+    // Upload to MinIO using existing patterns
+    objectPath, err := s.storage.UploadKYCDocument(ctx, req.MemberID, req.DocumentType, req.FileType, req.File, req.Filename)
+    if err != nil {
+        return nil, ecode.InternalServerError.Desc(err)
+    }
+
+    // Update member KYC documents using existing database patterns
+    documentUpdate := map[string]string{
+        fmt.Sprintf("%s.%s", req.DocumentType, req.FileType): objectPath,
+    }
+
+    if err := s.store.Db.Member.UpdateKYCDocuments(ctx, req.MemberID, documentUpdate); err != nil {
+        return nil, ecode.InternalServerError.Desc(err)
+    }
+
+    // Cache invalidation using existing Redis patterns
+    s.store.Rdb.Del(ctx, fmt.Sprintf("member:%s:kyc", req.MemberID))
+
+    // Audit log using existing system
+    s.auditLog(ctx, "kyc_document", enum.DataActionCreate, documentUpdate, req.MemberID)
+
+    return &KYCDocument{
+        MemberID:     req.MemberID,
+        DocumentType: req.DocumentType,
+        FileType:     req.FileType,
+        ObjectPath:   objectPath,
+        UploadedAt:   time.Now(),
+    }, nil
+}
+
+func (s *KYCService) SubmitForVerification(ctx context.Context, memberID string, req *SubmissionRequest) error {
+    // Validate member and documents
+    member, err := s.store.Db.Member.FindByID(ctx, memberID)
+    if err != nil {
+        return ecode.NotFound.Desc(err)
+    }
+
+    // Check current status
+    if member.KYCStatus != nil && (*member.KYCStatus == "submitted" || *member.KYCStatus == "verified") {
+        return ecode.ConflictError.Desc(fmt.Errorf("KYC already submitted or verified"))
+    }
+
+    // Update status to submitted
+    if err := s.store.Db.Member.UpdateKYCStatus(ctx, memberID, "submitted", memberID, nil); err != nil {
+        return ecode.InternalServerError.Desc(err)
+    }
+
+    // Send confirmation email using existing mail patterns
+    if member.Email != nil && member.FirstName != nil {
+        if err := s.mail.SendKYCSubmissionConfirmation(*member.Email, *member.FirstName); err != nil {
+            // Log error but don't fail the request
+            fmt.Printf("Failed to send KYC submission confirmation: %v\n", err)
+        }
+    }
+
+    // Cache invalidation
+    s.store.Rdb.Del(ctx, fmt.Sprintf("member:%s:kyc", memberID))
+
+    return nil
+}
+
+func (s *KYCService) VerifyMember(ctx context.Context, adminID, memberID string, req *VerificationRequest) error {
+    // Validate member exists and is ready for verification
+    member, err := s.store.Db.Member.FindByID(ctx, memberID)
+    if err != nil {
+        return ecode.NotFound.Desc(err)
+    }
+
+    currentStatus := "not_started"
+    if member.KYCStatus != nil {
+        currentStatus = *member.KYCStatus
+    }
+
+    if currentStatus != "submitted" && currentStatus != "in_review" {
+        return ecode.ConflictError.Desc(fmt.Errorf("member not ready for verification"))
+    }
+
+    // Determine new status
+    newStatus := "verified"
+    if req.Action == "reject" {
+        newStatus = "rejected"
+    }
+
+    // Update status with verification data
+    verificationData := map[string]interface{}{
+        "reason": req.Reason,
+        "notes":  req.Notes,
+    }
+
+    if err := s.store.Db.Member.UpdateKYCStatus(ctx, memberID, newStatus, adminID, verificationData); err != nil {
+        return ecode.InternalServerError.Desc(err)
+    }
+
+    // Send notification email using existing mail patterns
+    if member.Email != nil && member.FirstName != nil {
+        if req.Action == "approve" {
+            if err := s.mail.SendKYCApprovalNotification(*member.Email, *member.FirstName); err != nil {
+                fmt.Printf("Failed to send KYC approval notification: %v\n", err)
+            }
+        } else if req.Action == "reject" {
+            reason := "Additional documentation required"
+            if req.Reason != nil {
+                reason = *req.Reason
+            }
+            if err := s.mail.SendKYCRejectionNotification(*member.Email, *member.FirstName, reason); err != nil {
+                fmt.Printf("Failed to send KYC rejection notification: %v\n", err)
+            }
+        }
+    }
+
+    // Cache invalidation
+    s.store.Rdb.Del(ctx, fmt.Sprintf("member:%s:kyc", memberID))
+
+    // Audit log
+    s.auditLog(ctx, "kyc_verification", enum.DataActionUpdate, req, memberID)
+
+    return nil
+}
+```
+
 ### Data Layer (Extended from Existing Base)
 
 **Core Infrastructure** (leveraging existing `store/` structure):
@@ -428,15 +562,45 @@ type Db struct {
     },
     
     // eKYC fields
-    kyc_status: String,    // "pending", "verified", "rejected"
+    kyc_status: String,    // "not_started", "pending_kyc", "submitted", "in_review", "verified", "rejected"
     kyc_documents: {
-        id_document_url: String,
-        selfie_url: String,
-        uploaded_at: DateTime
+        passport: {
+            front: String,      // MinIO object path
+            back: String,       // MinIO object path
+            uploaded_at: DateTime
+        },
+        drivers_license: {
+            front: String,      // MinIO object path
+            back: String,       // MinIO object path
+            uploaded_at: DateTime
+        },
+        national_id: {
+            front: String,      // MinIO object path
+            back: String,       // MinIO object path
+            uploaded_at: DateTime
+        },
+        proof_of_address: {
+            document: String,   // MinIO object path
+            uploaded_at: DateTime
+        }
     },
-    kyc_verified_at: DateTime,
-    kyc_verified_by: String,
-    kyc_notes: String,
+    kyc_verification: {
+        submitted_at: DateTime,
+        submitted_by: String,
+        verified_at: DateTime,
+        verified_by: String,
+        rejected_at: DateTime,
+        rejected_by: String,
+        rejection_reason: String,
+        admin_notes: String,
+        verification_history: [{
+            action: String,     // "submitted", "in_review", "verified", "rejected"
+            action_by: String,  // User ID who performed the action
+            action_at: DateTime,
+            reason: String,
+            notes: String
+        }]
+    },
     
     // Membership tracking
     current_membership_id: String,

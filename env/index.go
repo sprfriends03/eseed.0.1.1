@@ -3,6 +3,7 @@ package env
 import (
 	"flag"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -25,9 +26,50 @@ var (
 )
 
 func init() {
-	filepath := flag.String("config", "env/config.env", "config:")
-	flag.Parse()
-	godotenv.Load(*filepath)
+	// Check if we're running in test mode by looking for test-related arguments
+	isTest := false
+	for _, arg := range os.Args {
+		if strings.Contains(arg, "test") || strings.Contains(arg, ".test") || strings.HasSuffix(arg, "_test") {
+			isTest = true
+			break
+		}
+	}
+
+	// Also check if we're in a test binary by looking at the executable name
+	if !isTest && len(os.Args) > 0 {
+		execName := os.Args[0]
+		if strings.Contains(execName, "test") || strings.Contains(execName, ".test") {
+			isTest = true
+		}
+	}
+
+	var configPath string
+	if isTest {
+		// In test mode, use default config path without parsing flags
+		configPath = "env/config.env"
+		// Also try relative path from test directory
+		if _, err := os.Stat(configPath); os.IsNotExist(err) {
+			configPath = "../env/config.env"
+		}
+	} else {
+		// In normal mode, parse flags
+		filepath := flag.String("config", "env/config.env", "config:")
+		flag.Parse()
+		configPath = *filepath
+	}
+
+	err := godotenv.Load(configPath)
+	if err != nil {
+		// In test mode, try alternative paths
+		if isTest {
+			altPaths := []string{"env/config.env", "../env/config.env", "../../env/config.env"}
+			for _, path := range altPaths {
+				if err := godotenv.Load(path); err == nil {
+					break
+				}
+			}
+		}
+	}
 
 	Port = os.Getenv("PORT")
 	RootUser = os.Getenv("ROOT_USER")

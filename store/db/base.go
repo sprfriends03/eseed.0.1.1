@@ -82,7 +82,7 @@ type Query struct {
 }
 
 type BaseDomain struct {
-	ID        primitive.ObjectID `json:"_id,omitempty"`
+	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	CreatedAt *time.Time         `json:"created_at,omitempty" validate:"omitempty"`
 	UpdatedAt *time.Time         `json:"updated_at,omitempty" validate:"omitempty"`
 	CreatedBy *string            `json:"created_by,omitempty" validate:"omitempty"`

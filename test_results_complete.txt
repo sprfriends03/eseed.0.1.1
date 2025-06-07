@@ -1,0 +1,224 @@
+time="2025-06-07T16:51:18+07:00" level=info msg="Connected to test MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin using database eseed_test"
+time="2025-06-07T16:51:18+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+time="2025-06-07T16:51:18+07:00" level=info msg="Using database name: eseed extracted from URI: mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+--- FAIL: TestMemberRegister_Success (0.03s)
+    auth_test.go:175: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:175
+        	Error:      	Not equal: 
+        	            	expected: 201
+        	            	actual  : 400
+        	Test:       	TestMemberRegister_Success
+        	Messages:   	Response code should be 201 Created. Body: {"error":"bad_request","error_description":"Key: 'MemberRegisterData.Username' Error:Field validation for 'Username' failed on the 'alphanum' tag\nKey: 'MemberRegisterData.Phone' Error:Field validation for 'Phone' failed on the 'e164' tag"}
+    auth_test.go:180: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:180
+        	Error:      	Not equal: 
+        	            	expected: "Member registered successfully. Please check your email to verify your account."
+        	            	actual  : ""
+        	            	
+        	            	Diff:
+        	            	--- Expected
+        	            	+++ Actual
+        	            	@@ -1 +1 @@
+        	            	-Member registered successfully. Please check your email to verify your account.
+        	            	+
+        	Test:       	TestMemberRegister_Success
+    auth_test.go:185: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:185
+        	Error:      	Received unexpected error:
+        	            	mongo: no documents in result
+        	Test:       	TestMemberRegister_Success
+        	Messages:   	User should be created in DB
+time="2025-06-07T16:51:18+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+time="2025-06-07T16:51:18+07:00" level=info msg="Using database name: eseed extracted from URI: mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+--- FAIL: TestMemberRegister_UserConflict_EmailExists (0.95s)
+    auth_test.go:263: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:263
+        	Error:      	Not equal: 
+        	            	expected: 409
+        	            	actual  : 400
+        	Test:       	TestMemberRegister_UserConflict_EmailExists
+        	Messages:   	Response code should be 409 Conflict. Body: {"error":"bad_request","error_description":"Key: 'MemberRegisterData.Username' Error:Field validation for 'Username' failed on the 'alphanum' tag\nKey: 'MemberRegisterData.Phone' Error:Field validation for 'Phone' failed on the 'e164' tag"}
+    auth_test.go:268: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:268
+        	Error:      	Not equal: 
+        	            	expected: "user_conflict"
+        	            	actual  : "bad_request"
+        	            	
+        	            	Diff:
+        	            	--- Expected
+        	            	+++ Actual
+        	            	@@ -1 +1 @@
+        	            	-user_conflict
+        	            	+bad_request
+        	Test:       	TestMemberRegister_UserConflict_EmailExists
+        	Messages:   	Error code should be UserConflict
+time="2025-06-07T16:51:19+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+time="2025-06-07T16:51:19+07:00" level=info msg="Using database name: eseed extracted from URI: mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+--- FAIL: TestMemberRegister_UserConflict_UsernameExists (0.96s)
+    auth_test.go:321: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:321
+        	Error:      	Not equal: 
+        	            	expected: 409
+        	            	actual  : 400
+        	Test:       	TestMemberRegister_UserConflict_UsernameExists
+        	Messages:   	Response code should be 409 Conflict. Body: {"error":"bad_request","error_description":"Key: 'MemberRegisterData.Username' Error:Field validation for 'Username' failed on the 'alphanum' tag\nKey: 'MemberRegisterData.Phone' Error:Field validation for 'Phone' failed on the 'e164' tag"}
+    auth_test.go:326: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:326
+        	Error:      	Not equal: 
+        	            	expected: "user_conflict"
+        	            	actual  : "bad_request"
+        	            	
+        	            	Diff:
+        	            	--- Expected
+        	            	+++ Actual
+        	            	@@ -1 +1 @@
+        	            	-user_conflict
+        	            	+bad_request
+        	Test:       	TestMemberRegister_UserConflict_UsernameExists
+        	Messages:   	Error code should be UserConflict
+time="2025-06-07T16:51:20+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+time="2025-06-07T16:51:20+07:00" level=info msg="Using database name: eseed extracted from URI: mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:51:20+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+time="2025-06-07T16:51:20+07:00" level=info msg="Using database name: eseed extracted from URI: mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:51:20+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+time="2025-06-07T16:51:20+07:00" level=info msg="Using database name: eseed extracted from URI: mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+--- FAIL: TestMemberRegister_InvalidDOB (0.02s)
+    --- FAIL: TestMemberRegister_InvalidDOB/Invalid_DOB_format_DD-MM-YYYY (0.00s)
+        auth_test.go:560: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:560
+            	Error:      	Not equal: 
+            	            	expected: "invalid_date_format"
+            	            	actual  : "bad_request"
+            	            	
+            	            	Diff:
+            	            	--- Expected
+            	            	+++ Actual
+            	            	@@ -1 +1 @@
+            	            	-invalid_date_format
+            	            	+bad_request
+            	Test:       	TestMemberRegister_InvalidDOB/Invalid_DOB_format_DD-MM-YYYY
+            	Messages:   	Specific error code for Invalid DOB format DD-MM-YYYY
+    --- FAIL: TestMemberRegister_InvalidDOB/Invalid_DOB_format_YYYY/MM/DD (0.00s)
+        auth_test.go:560: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:560
+            	Error:      	Not equal: 
+            	            	expected: "invalid_date_format"
+            	            	actual  : "bad_request"
+            	            	
+            	            	Diff:
+            	            	--- Expected
+            	            	+++ Actual
+            	            	@@ -1 +1 @@
+            	            	-invalid_date_format
+            	            	+bad_request
+            	Test:       	TestMemberRegister_InvalidDOB/Invalid_DOB_format_YYYY/MM/DD
+            	Messages:   	Specific error code for Invalid DOB format YYYY/MM/DD
+    --- FAIL: TestMemberRegister_InvalidDOB/Invalid_DOB_value_non-existent_date (0.00s)
+        auth_test.go:560: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:560
+            	Error:      	Not equal: 
+            	            	expected: "invalid_date_format"
+            	            	actual  : "bad_request"
+            	            	
+            	            	Diff:
+            	            	--- Expected
+            	            	+++ Actual
+            	            	@@ -1 +1 @@
+            	            	-invalid_date_format
+            	            	+bad_request
+            	Test:       	TestMemberRegister_InvalidDOB/Invalid_DOB_value_non-existent_date
+            	Messages:   	Specific error code for Invalid DOB value non-existent date
+    --- FAIL: TestMemberRegister_InvalidDOB/Invalid_DOB_non-numeric (0.00s)
+        auth_test.go:560: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:560
+            	Error:      	Not equal: 
+            	            	expected: "invalid_date_format"
+            	            	actual  : "bad_request"
+            	            	
+            	            	Diff:
+            	            	--- Expected
+            	            	+++ Actual
+            	            	@@ -1 +1 @@
+            	            	-invalid_date_format
+            	            	+bad_request
+            	Test:       	TestMemberRegister_InvalidDOB/Invalid_DOB_non-numeric
+            	Messages:   	Specific error code for Invalid DOB non-numeric
+time="2025-06-07T16:51:20+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+time="2025-06-07T16:51:20+07:00" level=info msg="Using database name: eseed extracted from URI: mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+--- FAIL: TestMemberRegister_TenantNotFound (0.02s)
+    auth_test.go:588: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:588
+        	Error:      	Not equal: 
+        	            	expected: 404
+        	            	actual  : 400
+        	Test:       	TestMemberRegister_TenantNotFound
+        	Messages:   	Response code for non-existent tenant. Body: {"error":"bad_request","error_description":"Key: 'MemberRegisterData.Username' Error:Field validation for 'Username' failed on the 'alphanum' tag\nKey: 'MemberRegisterData.Phone' Error:Field validation for 'Phone' failed on the 'e164' tag"}
+    auth_test.go:593: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:593
+        	Error:      	Not equal: 
+        	            	expected: "tenant_not_found"
+        	            	actual  : "bad_request"
+        	            	
+        	            	Diff:
+        	            	--- Expected
+        	            	+++ Actual
+        	            	@@ -1 +1 @@
+        	            	-tenant_not_found
+        	            	+bad_request
+        	Test:       	TestMemberRegister_TenantNotFound
+        	Messages:   	Error code should be TenantNotFound
+time="2025-06-07T16:51:20+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:51:20+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:51:21+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:51:21+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:51:22+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:51:22+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:51:23+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:51:23+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:51:24+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:51:24+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:51:25+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:51:25+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:51:26+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:51:26+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:51:27+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:51:27+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:51:28+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:51:28+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:51:29+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:51:29+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+FAIL

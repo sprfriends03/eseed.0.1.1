@@ -15,7 +15,7 @@ import (
 )
 
 type UserDomain struct {
-	BaseDomain                      `json:"inline"`
+	BaseDomain                      `bson:",inline"`
 	Name                            *string          `json:"name,omitempty" validate:"omitempty"`
 	Phone                           *string          `json:"phone,omitempty" validate:"omitempty,lowercase"`
 	Email                           *string          `json:"email,omitempty" validate:"omitempty,lowercase"`
@@ -211,6 +211,7 @@ func (s user) Save(ctx context.Context, domain *UserDomain, opts ...*options.Upd
 	if err := domain.Validate(); err != nil {
 		return nil, err
 	}
+
 	id, err := s.repo.Save(ctx, domain.ID, domain, opts...)
 	if err != nil {
 		return nil, err

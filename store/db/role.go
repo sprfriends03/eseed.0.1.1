@@ -13,7 +13,7 @@ import (
 )
 
 type RoleDomain struct {
-	BaseDomain  `json:"inline"`
+	BaseDomain  `bson:",inline"`
 	Name        *string            `json:"name,omitempty" validate:"omitempty"`
 	Permissions *[]enum.Permission `json:"permissions,omitempty" validate:"omitempty,dive,permission"`
 	DataStatus  *enum.DataStatus   `json:"data_status,omitempty" validate:"omitempty,data_status"`

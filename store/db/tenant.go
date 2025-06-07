@@ -13,7 +13,7 @@ import (
 )
 
 type TenantDomain struct {
-	BaseDomain `json:"inline"`
+	BaseDomain `bson:",inline"`
 	Name       *string          `json:"name,omitempty" validate:"omitempty"`
 	Keycode    *string          `json:"keycode,omitempty" validate:"omitempty,lowercase"`
 	Username   *string          `json:"username,omitempty" validate:"omitempty,lowercase"`
@@ -142,6 +142,7 @@ func (s tenant) Save(ctx context.Context, domain *TenantDomain, opts ...*options
 	if err := domain.Validate(); err != nil {
 		return nil, err
 	}
+
 	id, err := s.repo.Save(ctx, domain.ID, domain, opts...)
 	if err != nil {
 		return nil, err

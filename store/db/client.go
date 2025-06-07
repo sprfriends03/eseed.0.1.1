@@ -14,7 +14,7 @@ import (
 )
 
 type ClientDomain struct {
-	BaseDomain   `json:"inline"`
+	BaseDomain   `bson:",inline"`
 	Name         *string      `json:"name,omitempty" validate:"omitempty"`
 	ClientId     *string      `json:"client_id,omitempty" validate:"omitempty"`
 	ClientSecret *string      `json:"client_secret,omitempty" validate:"omitempty"`

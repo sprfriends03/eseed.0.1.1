@@ -1,0 +1,326 @@
+time="2025-06-07T16:44:49+07:00" level=info msg="Connected to test MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin using database eseed_test"
+time="2025-06-07T16:44:49+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+time="2025-06-07T16:44:49+07:00" level=info msg="Using database name: eseed extracted from URI: mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+--- FAIL: TestMemberRegister_Success (0.02s)
+    auth_test.go:175: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:175
+        	Error:      	Not equal: 
+        	            	expected: 201
+        	            	actual  : 400
+        	Test:       	TestMemberRegister_Success
+        	Messages:   	Response code should be 201 Created. Body: {"error":"bad_request","error_description":"Key: 'MemberRegisterData.Username' Error:Field validation for 'Username' failed on the 'alphanum' tag\nKey: 'MemberRegisterData.Phone' Error:Field validation for 'Phone' failed on the 'e164' tag"}
+    auth_test.go:180: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:180
+        	Error:      	Not equal: 
+        	            	expected: "Member registered successfully. Please check your email to verify your account."
+        	            	actual  : ""
+        	            	
+        	            	Diff:
+        	            	--- Expected
+        	            	+++ Actual
+        	            	@@ -1 +1 @@
+        	            	-Member registered successfully. Please check your email to verify your account.
+        	            	+
+        	Test:       	TestMemberRegister_Success
+    auth_test.go:185: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:185
+        	Error:      	Received unexpected error:
+        	            	mongo: no documents in result
+        	Test:       	TestMemberRegister_Success
+        	Messages:   	User should be created in DB
+time="2025-06-07T16:44:49+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+time="2025-06-07T16:44:49+07:00" level=info msg="Using database name: eseed extracted from URI: mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+--- FAIL: TestMemberRegister_UserConflict_EmailExists (0.98s)
+    auth_test.go:263: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:263
+        	Error:      	Not equal: 
+        	            	expected: 409
+        	            	actual  : 400
+        	Test:       	TestMemberRegister_UserConflict_EmailExists
+        	Messages:   	Response code should be 409 Conflict. Body: {"error":"bad_request","error_description":"Key: 'MemberRegisterData.Username' Error:Field validation for 'Username' failed on the 'alphanum' tag\nKey: 'MemberRegisterData.Phone' Error:Field validation for 'Phone' failed on the 'e164' tag"}
+    auth_test.go:268: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:268
+        	Error:      	Not equal: 
+        	            	expected: "user_conflict"
+        	            	actual  : "bad_request"
+        	            	
+        	            	Diff:
+        	            	--- Expected
+        	            	+++ Actual
+        	            	@@ -1 +1 @@
+        	            	-user_conflict
+        	            	+bad_request
+        	Test:       	TestMemberRegister_UserConflict_EmailExists
+        	Messages:   	Error code should be UserConflict
+time="2025-06-07T16:44:50+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+time="2025-06-07T16:44:50+07:00" level=info msg="Using database name: eseed extracted from URI: mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+--- FAIL: TestMemberRegister_UserConflict_UsernameExists (0.98s)
+    auth_test.go:321: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:321
+        	Error:      	Not equal: 
+        	            	expected: 409
+        	            	actual  : 400
+        	Test:       	TestMemberRegister_UserConflict_UsernameExists
+        	Messages:   	Response code should be 409 Conflict. Body: {"error":"bad_request","error_description":"Key: 'MemberRegisterData.Username' Error:Field validation for 'Username' failed on the 'alphanum' tag\nKey: 'MemberRegisterData.Phone' Error:Field validation for 'Phone' failed on the 'e164' tag"}
+    auth_test.go:326: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:326
+        	Error:      	Not equal: 
+        	            	expected: "user_conflict"
+        	            	actual  : "bad_request"
+        	            	
+        	            	Diff:
+        	            	--- Expected
+        	            	+++ Actual
+        	            	@@ -1 +1 @@
+        	            	-user_conflict
+        	            	+bad_request
+        	Test:       	TestMemberRegister_UserConflict_UsernameExists
+        	Messages:   	Error code should be UserConflict
+time="2025-06-07T16:44:51+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+time="2025-06-07T16:44:51+07:00" level=info msg="Using database name: eseed extracted from URI: mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:44:51+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+time="2025-06-07T16:44:51+07:00" level=info msg="Using database name: eseed extracted from URI: mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:44:51+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+time="2025-06-07T16:44:51+07:00" level=info msg="Using database name: eseed extracted from URI: mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+--- FAIL: TestMemberRegister_InvalidDOB (0.02s)
+    --- FAIL: TestMemberRegister_InvalidDOB/Invalid_DOB_format_DD-MM-YYYY (0.00s)
+        auth_test.go:560: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:560
+            	Error:      	Not equal: 
+            	            	expected: "invalid_date_format"
+            	            	actual  : "bad_request"
+            	            	
+            	            	Diff:
+            	            	--- Expected
+            	            	+++ Actual
+            	            	@@ -1 +1 @@
+            	            	-invalid_date_format
+            	            	+bad_request
+            	Test:       	TestMemberRegister_InvalidDOB/Invalid_DOB_format_DD-MM-YYYY
+            	Messages:   	Specific error code for Invalid DOB format DD-MM-YYYY
+    --- FAIL: TestMemberRegister_InvalidDOB/Invalid_DOB_format_YYYY/MM/DD (0.00s)
+        auth_test.go:560: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:560
+            	Error:      	Not equal: 
+            	            	expected: "invalid_date_format"
+            	            	actual  : "bad_request"
+            	            	
+            	            	Diff:
+            	            	--- Expected
+            	            	+++ Actual
+            	            	@@ -1 +1 @@
+            	            	-invalid_date_format
+            	            	+bad_request
+            	Test:       	TestMemberRegister_InvalidDOB/Invalid_DOB_format_YYYY/MM/DD
+            	Messages:   	Specific error code for Invalid DOB format YYYY/MM/DD
+    --- FAIL: TestMemberRegister_InvalidDOB/Invalid_DOB_value_non-existent_date (0.00s)
+        auth_test.go:560: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:560
+            	Error:      	Not equal: 
+            	            	expected: "invalid_date_format"
+            	            	actual  : "bad_request"
+            	            	
+            	            	Diff:
+            	            	--- Expected
+            	            	+++ Actual
+            	            	@@ -1 +1 @@
+            	            	-invalid_date_format
+            	            	+bad_request
+            	Test:       	TestMemberRegister_InvalidDOB/Invalid_DOB_value_non-existent_date
+            	Messages:   	Specific error code for Invalid DOB value non-existent date
+    --- FAIL: TestMemberRegister_InvalidDOB/Invalid_DOB_non-numeric (0.00s)
+        auth_test.go:560: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:560
+            	Error:      	Not equal: 
+            	            	expected: "invalid_date_format"
+            	            	actual  : "bad_request"
+            	            	
+            	            	Diff:
+            	            	--- Expected
+            	            	+++ Actual
+            	            	@@ -1 +1 @@
+            	            	-invalid_date_format
+            	            	+bad_request
+            	Test:       	TestMemberRegister_InvalidDOB/Invalid_DOB_non-numeric
+            	Messages:   	Specific error code for Invalid DOB non-numeric
+time="2025-06-07T16:44:51+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+time="2025-06-07T16:44:51+07:00" level=info msg="Using database name: eseed extracted from URI: mongodb://root:12345678@localhost:27017/eseed?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+--- FAIL: TestMemberRegister_TenantNotFound (0.02s)
+    auth_test.go:588: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:588
+        	Error:      	Not equal: 
+        	            	expected: 404
+        	            	actual  : 400
+        	Test:       	TestMemberRegister_TenantNotFound
+        	Messages:   	Response code for non-existent tenant. Body: {"error":"bad_request","error_description":"Key: 'MemberRegisterData.Username' Error:Field validation for 'Username' failed on the 'alphanum' tag\nKey: 'MemberRegisterData.Phone' Error:Field validation for 'Phone' failed on the 'e164' tag"}
+    auth_test.go:593: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/auth_test.go:593
+        	Error:      	Not equal: 
+        	            	expected: "tenant_not_found"
+        	            	actual  : "bad_request"
+        	            	
+        	            	Diff:
+        	            	--- Expected
+        	            	+++ Actual
+        	            	@@ -1 +1 @@
+        	            	-tenant_not_found
+        	            	+bad_request
+        	Test:       	TestMemberRegister_TenantNotFound
+        	Messages:   	Error code should be TenantNotFound
+time="2025-06-07T16:44:51+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:44:51+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:44:52+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:44:52+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:44:53+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:44:53+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+--- FAIL: TestUploadDocument_Unauthorized (1.01s)
+    kyc_test.go:137: Test tenant already exists with ID: 68440417e2bf7af2258b6d16
+    kyc_test.go:395: Response status: 401
+    kyc_test.go:396: Response body: {"error":"unauthorized","error_description":""}
+    kyc_test.go:402: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/kyc_test.go:402
+        	Error:      	Not equal: 
+        	            	expected: 500
+        	            	actual  : 401
+        	Test:       	TestUploadDocument_Unauthorized
+time="2025-06-07T16:44:54+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:44:54+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:44:55+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:44:55+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+--- FAIL: TestGetStatus_Unauthorized (1.03s)
+    kyc_test.go:137: Test tenant already exists with ID: 68440417e2bf7af2258b6d16
+    kyc_test.go:442: Response status: 401
+    kyc_test.go:443: Response body: {"error":"unauthorized","error_description":""}
+    kyc_test.go:449: 
+        	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/kyc_test.go:449
+        	Error:      	Not equal: 
+        	            	expected: 500
+        	            	actual  : 401
+        	Test:       	TestGetStatus_Unauthorized
+time="2025-06-07T16:44:56+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:44:56+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:44:57+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:44:57+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:44:58+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:44:58+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:44:59+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:44:59+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+time="2025-06-07T16:45:00+07:00" level=info msg="Connected to MongoDB at mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+time="2025-06-07T16:45:00+07:00" level=info msg="Using database name: eseed_test extracted from URI: mongodb://root:12345678@localhost:27017/eseed_test?authSource=admin"
+Redis connected redis://:12345678@localhost:6379/0
+Minio connected minio://root:12345678@localhost:9000/eseed
+--- FAIL: TestSecurityAllEndpoints_WithoutAuth (1.03s)
+    kyc_test.go:137: Test tenant already exists with ID: 68440417e2bf7af2258b6d16
+    --- FAIL: TestSecurityAllEndpoints_WithoutAuth/POST_/kyc/v1/documents/upload (0.00s)
+        kyc_test.go:606: Response status: 401
+        kyc_test.go:607: Response body: {"error":"unauthorized","error_description":""}
+        kyc_test.go:613: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/kyc_test.go:613
+            	Error:      	Not equal: 
+            	            	expected: 500
+            	            	actual  : 401
+            	Test:       	TestSecurityAllEndpoints_WithoutAuth/POST_/kyc/v1/documents/upload
+            	Messages:   	Endpoint POST /kyc/v1/documents/upload should reject unauthenticated requests
+    --- FAIL: TestSecurityAllEndpoints_WithoutAuth/GET_/kyc/v1/status (0.00s)
+        kyc_test.go:606: Response status: 401
+        kyc_test.go:607: Response body: {"error":"unauthorized","error_description":""}
+        kyc_test.go:613: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/kyc_test.go:613
+            	Error:      	Not equal: 
+            	            	expected: 500
+            	            	actual  : 401
+            	Test:       	TestSecurityAllEndpoints_WithoutAuth/GET_/kyc/v1/status
+            	Messages:   	Endpoint GET /kyc/v1/status should reject unauthenticated requests
+    --- FAIL: TestSecurityAllEndpoints_WithoutAuth/POST_/kyc/v1/submit (0.00s)
+        kyc_test.go:606: Response status: 401
+        kyc_test.go:607: Response body: {"error":"unauthorized","error_description":""}
+        kyc_test.go:613: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/kyc_test.go:613
+            	Error:      	Not equal: 
+            	            	expected: 500
+            	            	actual  : 401
+            	Test:       	TestSecurityAllEndpoints_WithoutAuth/POST_/kyc/v1/submit
+            	Messages:   	Endpoint POST /kyc/v1/submit should reject unauthenticated requests
+    --- FAIL: TestSecurityAllEndpoints_WithoutAuth/DELETE_/kyc/v1/documents/passport (0.00s)
+        kyc_test.go:606: Response status: 401
+        kyc_test.go:607: Response body: {"error":"unauthorized","error_description":""}
+        kyc_test.go:613: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/kyc_test.go:613
+            	Error:      	Not equal: 
+            	            	expected: 500
+            	            	actual  : 401
+            	Test:       	TestSecurityAllEndpoints_WithoutAuth/DELETE_/kyc/v1/documents/passport
+            	Messages:   	Endpoint DELETE /kyc/v1/documents/passport should reject unauthenticated requests
+    --- FAIL: TestSecurityAllEndpoints_WithoutAuth/GET_/kyc/v1/admin/pending (0.00s)
+        kyc_test.go:606: Response status: 401
+        kyc_test.go:607: Response body: {"error":"unauthorized","error_description":""}
+        kyc_test.go:613: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/kyc_test.go:613
+            	Error:      	Not equal: 
+            	            	expected: 500
+            	            	actual  : 401
+            	Test:       	TestSecurityAllEndpoints_WithoutAuth/GET_/kyc/v1/admin/pending
+            	Messages:   	Endpoint GET /kyc/v1/admin/pending should reject unauthenticated requests
+    --- FAIL: TestSecurityAllEndpoints_WithoutAuth/GET_/kyc/v1/admin/members/member_id (0.00s)
+        kyc_test.go:606: Response status: 401
+        kyc_test.go:607: Response body: {"error":"unauthorized","error_description":""}
+        kyc_test.go:613: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/kyc_test.go:613
+            	Error:      	Not equal: 
+            	            	expected: 500
+            	            	actual  : 401
+            	Test:       	TestSecurityAllEndpoints_WithoutAuth/GET_/kyc/v1/admin/members/member_id
+            	Messages:   	Endpoint GET /kyc/v1/admin/members/member_id should reject unauthenticated requests
+    --- FAIL: TestSecurityAllEndpoints_WithoutAuth/POST_/kyc/v1/admin/verify/member_id (0.00s)
+        kyc_test.go:606: Response status: 401
+        kyc_test.go:607: Response body: {"error":"unauthorized","error_description":""}
+        kyc_test.go:613: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/kyc_test.go:613
+            	Error:      	Not equal: 
+            	            	expected: 500
+            	            	actual  : 401
+            	Test:       	TestSecurityAllEndpoints_WithoutAuth/POST_/kyc/v1/admin/verify/member_id
+            	Messages:   	Endpoint POST /kyc/v1/admin/verify/member_id should reject unauthenticated requests
+    --- FAIL: TestSecurityAllEndpoints_WithoutAuth/GET_/kyc/v1/admin/documents/member_id/file.jpg (0.00s)
+        kyc_test.go:606: Response status: 401
+        kyc_test.go:607: Response body: {"error":"unauthorized","error_description":""}
+        kyc_test.go:613: 
+            	Error Trace:	/Users/bobacu/Documents/prjs/eseed/route/kyc_test.go:613
+            	Error:      	Not equal: 
+            	            	expected: 500
+            	            	actual  : 401
+            	Test:       	TestSecurityAllEndpoints_WithoutAuth/GET_/kyc/v1/admin/documents/member_id/file.jpg
+            	Messages:   	Endpoint GET /kyc/v1/admin/documents/member_id/file.jpg should reject unauthenticated requests
+FAIL

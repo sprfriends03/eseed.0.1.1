@@ -14,13 +14,17 @@ import (
 )
 
 type AuditLogDomain struct {
-	BaseDomain `json:"inline"`
+	BaseDomain `bson:",inline"`
 	Name       *string          `json:"name,omitempty" validate:"omitempty"`
 	Url        *string          `json:"url,omitempty" validate:"omitempty"`
 	Method     *string          `json:"method,omitempty" validate:"omitempty"`
+	Body       *string          `json:"body,omitempty" validate:"omitempty"`
 	Data       *[]byte          `json:"data,omitempty" validate:"omitempty"`
 	Domain     *[]byte          `json:"domain,omitempty" validate:"omitempty"`
 	DomainId   *string          `json:"domain_id,omitempty" validate:"omitempty,len=24"`
+	UserId     *string          `json:"user_id,omitempty" validate:"omitempty,len=24"`
+	UserEmail  *string          `json:"user_email,omitempty" validate:"omitempty"`
+	UserName   *string          `json:"user_name,omitempty" validate:"omitempty"`
 	Action     *enum.DataAction `json:"action,omitempty" validate:"omitempty,data_action"`
 	TenantId   *enum.Tenant     `json:"tenant_id,omitempty" validate:"omitempty,len=24"`
 }

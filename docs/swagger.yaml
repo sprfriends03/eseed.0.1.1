@@ -397,6 +397,169 @@ definitions:
         example: aloha
         type: string
     type: object
+  db.KYCDocumentUploadData:
+    properties:
+      document_type:
+        type: string
+        enum: [passport, drivers_license, national_id, proof_of_address]
+        example: passport
+      file_type:
+        type: string
+        enum: [front, back, document]
+        example: front
+    required:
+    - document_type
+    - file_type
+    type: object
+  db.KYCSubmissionData:
+    properties:
+      document_type:
+        type: string
+        enum: [passport, drivers_license, national_id]
+        example: passport
+      has_all_documents:
+        type: boolean
+        example: true
+      confirm_accuracy:
+        type: boolean
+        example: true
+    required:
+    - document_type
+    - has_all_documents
+    - confirm_accuracy
+    type: object
+  db.KYCVerificationData:
+    properties:
+      action:
+        type: string
+        enum: [approve, reject]
+        example: approve
+      reason:
+        type: string
+        example: "Additional documentation required"
+      notes:
+        type: string
+        example: "Please provide clearer image of passport"
+    required:
+    - action
+    type: object
+  db.KYCDocumentStatus:
+    properties:
+      has_front:
+        type: boolean
+        example: true
+      has_back:
+        type: boolean
+        example: true
+      has_document:
+        type: boolean
+        example: true
+      uploaded_at:
+        type: string
+        format: date-time
+        example: "2006-01-02T03:04:05Z"
+      is_complete:
+        type: boolean
+        example: true
+    type: object
+  db.KYCVerificationStatusDto:
+    properties:
+      submitted_at:
+        type: string
+        format: date-time
+        example: "2006-01-02T03:04:05Z"
+      verified_at:
+        type: string
+        format: date-time
+        example: "2006-01-02T03:04:05Z"
+      verified_by:
+        type: string
+        example: "admin_user_id"
+      rejected_at:
+        type: string
+        format: date-time
+        example: "2006-01-02T03:04:05Z"
+      rejected_by:
+        type: string
+        example: "admin_user_id"
+      rejection_reason:
+        type: string
+        example: "Document quality insufficient"
+      admin_notes:
+        type: string
+        example: "Please resubmit with higher quality images"
+    type: object
+  db.KYCVerificationHistoryDto:
+    properties:
+      action:
+        type: string
+        example: submitted
+      action_by:
+        type: string
+        example: "user_id"
+      action_at:
+        type: string
+        format: date-time
+        example: "2006-01-02T03:04:05Z"
+      reason:
+        type: string
+        example: "Initial submission"
+      notes:
+        type: string
+        example: "All documents provided"
+    type: object
+  db.KYCStatusDto:
+    properties:
+      kyc_status:
+        type: string
+        enum: [not_started, pending_kyc, submitted, in_review, verified, rejected]
+        example: submitted
+      can_submit:
+        type: boolean
+        example: true
+      has_documents:
+        type: boolean
+        example: true
+      documents_status:
+        type: object
+        additionalProperties:
+          $ref: '#/definitions/db.KYCDocumentStatus'
+      verification:
+        $ref: '#/definitions/db.KYCVerificationStatusDto'
+      history:
+        type: array
+        items:
+          $ref: '#/definitions/db.KYCVerificationHistoryDto'
+    type: object
+  db.KYCPendingMemberDto:
+    properties:
+      id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4617"
+      email:
+        type: string
+        example: "member@example.com"
+      first_name:
+        type: string
+        example: "John"
+      last_name:
+        type: string
+        example: "Doe"
+      kyc_status:
+        type: string
+        example: "submitted"
+      submitted_at:
+        type: string
+        format: date-time
+        example: "2006-01-02T03:04:05Z"
+      document_type:
+        type: string
+        example: "passport"
+      documents:
+        type: object
+        additionalProperties:
+          $ref: '#/definitions/db.KYCDocumentStatus'
+    type: object
   enum.DataAction:
     enum:
     - create
@@ -430,6 +593,10 @@ definitions:
     - user_view
     - user_create
     - user_update
+    - user_view_self
+    - user_update_self
+    - kyc_view
+    - kyc_verify
     - tenant_view
     - tenant_create
     - tenant_update
@@ -446,6 +613,10 @@ definitions:
     - PermissionUserView
     - PermissionUserCreate
     - PermissionUserUpdate
+    - PermissionUserViewSelf
+    - PermissionUserUpdateSelf
+    - PermissionKYCView
+    - PermissionKYCVerify
     - PermissionTenantView
     - PermissionTenantCreate
     - PermissionTenantUpdate
@@ -1213,6 +1384,294 @@ paths:
       summary: Websocket
       tags:
       - Websocket
+  /kyc/v1/documents/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: KYC document file (PDF, JPG, PNG, TIFF)
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Type of document
+        in: formData
+        name: document_type
+        required: true
+        type: string
+        enum: [passport, drivers_license, national_id, proof_of_address]
+      - description: Side of document
+        in: formData
+        name: file_type
+        required: true
+        type: string
+        enum: [front, back, document]
+      responses:
+        "200":
+          description: Document uploaded successfully
+          schema:
+            properties:
+              message:
+                type: string
+                example: "Document uploaded successfully"
+              object_path:
+                type: string
+                example: "member_id/passport/front/timestamp-filename.jpg"
+            type: object
+        "400":
+          description: Bad Request - Invalid file or data
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "500":
+          description: Internal Server Error - Upload failed
+      security:
+      - BearerAuth: []
+      summary: Upload KYC Document
+      tags:
+      - KYC
+  /kyc/v1/status:
+    get:
+      responses:
+        "200":
+          description: Current KYC status
+          schema:
+            $ref: '#/definitions/db.KYCStatusDto'
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "404":
+          description: Member not found
+      security:
+      - BearerAuth: []
+      summary: Get KYC Status
+      tags:
+      - KYC
+  /kyc/v1/submit:
+    post:
+      parameters:
+      - description: KYC submission data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.KYCSubmissionData'
+      responses:
+        "200":
+          description: KYC submitted successfully
+          schema:
+            properties:
+              message:
+                type: string
+                example: "KYC submitted for verification successfully"
+              status:
+                type: string
+                example: "submitted"
+            type: object
+        "400":
+          description: Bad Request - Invalid submission data
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "409":
+          description: Conflict - KYC already submitted or verified
+      security:
+      - BearerAuth: []
+      summary: Submit KYC for Verification
+      tags:
+      - KYC
+  /kyc/v1/documents/{document_type}:
+    delete:
+      parameters:
+      - description: Type of document to delete
+        in: path
+        name: document_type
+        required: true
+        type: string
+        enum: [passport, drivers_license, national_id, proof_of_address]
+      responses:
+        "200":
+          description: Document deleted successfully
+          schema:
+            properties:
+              message:
+                type: string
+                example: "Documents for passport deleted successfully"
+            type: object
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Cannot delete documents in current status
+        "404":
+          description: Member not found
+      security:
+      - BearerAuth: []
+      summary: Delete KYC Document
+      tags:
+      - KYC
+  /kyc/v1/admin/pending:
+    get:
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      responses:
+        "200":
+          description: List of pending KYC verifications
+          schema:
+            properties:
+              members:
+                type: array
+                items:
+                  $ref: '#/definitions/db.KYCPendingMemberDto'
+              total_count:
+                type: integer
+                example: 25
+              page:
+                type: integer
+                example: 1
+              limit:
+                type: integer
+                example: 10
+            type: object
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Insufficient permissions
+      security:
+      - BearerAuth: []
+      summary: Get Pending KYC Verifications (Admin)
+      tags:
+      - KYC Admin
+  /kyc/v1/admin/members/{member_id}:
+    get:
+      parameters:
+      - description: Member ID
+        in: path
+        name: member_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Detailed member KYC information
+          schema:
+            properties:
+              id:
+                type: string
+                example: "654db9eca1f1b1bdbf3d4617"
+              email:
+                type: string
+                example: "member@example.com"
+              first_name:
+                type: string
+                example: "John"
+              last_name:
+                type: string
+                example: "Doe"
+              phone:
+                type: string
+                example: "+1234567890"
+              date_of_birth:
+                type: string
+                format: date-time
+              kyc_status:
+                $ref: '#/definitions/db.KYCStatusDto'
+            type: object
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Insufficient permissions or different tenant
+        "404":
+          description: Member not found
+      security:
+      - BearerAuth: []
+      summary: Get Member KYC Details (Admin)
+      tags:
+      - KYC Admin
+  /kyc/v1/admin/verify/{member_id}:
+    post:
+      parameters:
+      - description: Member ID
+        in: path
+        name: member_id
+        required: true
+        type: string
+      - description: Verification decision
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.KYCVerificationData'
+      responses:
+        "200":
+          description: Member KYC verification completed
+          schema:
+            properties:
+              message:
+                type: string
+                example: "Member KYC approved successfully"
+              status:
+                type: string
+                example: "verified"
+            type: object
+        "400":
+          description: Bad Request - Invalid verification data
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Insufficient permissions or different tenant
+        "404":
+          description: Member not found
+        "409":
+          description: Conflict - Member not ready for verification
+      security:
+      - BearerAuth: []
+      summary: Verify Member KYC (Admin)
+      tags:
+      - KYC Admin
+  /kyc/v1/admin/documents/{member_id}/{filename}:
+    get:
+      parameters:
+      - description: Member ID
+        in: path
+        name: member_id
+        required: true
+        type: string
+      - description: Document filename
+        in: path
+        name: filename
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Document download URL
+          schema:
+            properties:
+              download_url:
+                type: string
+                example: "https://storage.example.com/presigned-url"
+              expires_in:
+                type: integer
+                example: 3600
+            type: object
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Insufficient permissions or different tenant
+        "404":
+          description: Member or document not found
+      security:
+      - BearerAuth: []
+      summary: Download KYC Document (Admin)
+      tags:
+      - KYC Admin
 securityDefinitions:
   BasicAuth:
     type: basic

@@ -31,6 +31,42 @@ func New() *StructValidator {
 	validate.RegisterValidation("regexp", func(e validator.FieldLevel) bool {
 		return regexp.MustCompile(e.Param()).MatchString(e.Field().String())
 	})
+
+	// Register custom alphanum validator since built-in one isn't working reliably
+	validate.RegisterValidation("alphanum", func(fl validator.FieldLevel) bool {
+		value := fl.Field().String()
+		for _, char := range value {
+			if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || (char >= '0' && char <= '9')) {
+				return false
+			}
+		}
+		return len(value) > 0
+	})
+
+	// Register custom e164 validator since built-in one isn't working reliably
+	validate.RegisterValidation("e164", func(fl validator.FieldLevel) bool {
+		value := fl.Field().String()
+		// E164 format: +[1-9][0-9]{1,14}
+		if len(value) < 2 || value[0] != '+' {
+			return false
+		}
+		digits := value[1:]
+		if len(digits) < 1 || len(digits) > 15 {
+			return false
+		}
+		// First digit must be 1-9
+		if digits[0] < '1' || digits[0] > '9' {
+			return false
+		}
+		// Rest must be digits
+		for i := 1; i < len(digits); i++ {
+			if digits[i] < '0' || digits[i] > '9' {
+				return false
+			}
+		}
+		return true
+	})
+
 	return &StructValidator{validate}
 }
 
@@ -64,9 +100,18 @@ func (s StructValidator) ValidateStruct(out any) error {
 				msgs[1] = "must be uppercase"
 			case "regexp":
 				msgs[1] = "must match pattern"
+			case "alphanum":
+				msgs[1] = "must contain only alphanumeric characters"
+			case "e164":
+				msgs[1] = "must be a valid E164 phone number format"
+			case "email":
+				msgs[1] = "must be a valid email address"
 			default:
 				if values, ok := tags[e.Tag()]; ok {
 					msgs[1] = fmt.Sprintf("must be one of (%v)", strings.Join(values, ","))
+				} else {
+					// For unknown tags, show the tag name as-is
+					msgs[1] = fmt.Sprintf("failed '%s' validation", e.Tag())
 				}
 			}
 			if len(e.Param()) > 0 {

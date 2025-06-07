@@ -252,3 +252,138 @@ func (s Storage) DeleteProfileImage(ctx context.Context, objectName string) erro
 	bucket := s.GetBucketForType("profile")
 	return s.client.RemoveObject(ctx, bucket, objectName, minio.RemoveObjectOptions{})
 }
+
+// KYC Document Methods
+
+// UploadKYCDocument uploads a KYC document to the kyc-documents bucket
+func (s Storage) UploadKYCDocument(ctx context.Context, memberID, docType, fileType string, reader io.Reader, filename string) (string, error) {
+	// Generate unique object name: memberID/docType/fileType/timestamp-filename
+	objectName := fmt.Sprintf("%s/%s/%s/%d-%s", memberID, docType, fileType, time.Now().Unix(), filename)
+
+	// Get file size by reading into memory
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file: %w", err)
+	}
+
+	// Validate file size (max 10MB for KYC documents)
+	maxSize := int64(10 * 1024 * 1024) // 10MB
+	if int64(len(data)) > maxSize {
+		return "", fmt.Errorf("file size exceeds maximum allowed size of %d bytes", maxSize)
+	}
+
+	// Create new reader from data
+	newReader := strings.NewReader(string(data))
+	objectSize := int64(len(data))
+
+	// Determine content type from filename extension
+	contentType := getContentTypeFromFilename(filename)
+
+	// Upload to KYC bucket
+	_, err = s.UploadToTypeBucket(ctx, "kyc", objectName, newReader, objectSize, contentType)
+	if err != nil {
+		return "", fmt.Errorf("failed to upload KYC document: %w", err)
+	}
+
+	return objectName, nil
+}
+
+// DeleteKYCDocument deletes a KYC document from the kyc-documents bucket
+func (s Storage) DeleteKYCDocument(ctx context.Context, objectName string) error {
+	bucket := s.GetBucketForType("kyc")
+	err := s.client.RemoveObject(ctx, bucket, objectName, minio.RemoveObjectOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to delete KYC document: %w", err)
+	}
+	return nil
+}
+
+// GetKYCDocumentURL generates a presigned URL for accessing a KYC document
+func (s Storage) GetKYCDocumentURL(ctx context.Context, objectName string) (string, error) {
+	bucket := s.GetBucketForType("kyc")
+
+	// Generate presigned URL valid for 1 hour
+	presignedURL, err := s.client.PresignedGetObject(ctx, bucket, objectName, time.Hour, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
+
+	return presignedURL.String(), nil
+}
+
+// ValidateKYCFile validates file type, size, and basic security checks for KYC uploads
+func (s Storage) ValidateKYCFile(filename string, fileSize int64, fileContent []byte) error {
+	// Check file size (max 10MB)
+	maxSize := int64(10 * 1024 * 1024) // 10MB
+	if fileSize > maxSize {
+		return fmt.Errorf("file size %d exceeds maximum allowed size of %d bytes", fileSize, maxSize)
+	}
+
+	// Check file extension
+	allowedExtensions := []string{".jpg", ".jpeg", ".png", ".pdf", ".tiff", ".tif"}
+	isAllowed := false
+	lowerFilename := strings.ToLower(filename)
+	for _, ext := range allowedExtensions {
+		if strings.HasSuffix(lowerFilename, ext) {
+			isAllowed = true
+			break
+		}
+	}
+
+	if !isAllowed {
+		return fmt.Errorf("file type not allowed. Allowed types: %v", allowedExtensions)
+	}
+
+	// Basic file content validation (magic number check)
+	if len(fileContent) < 10 {
+		return fmt.Errorf("file appears to be corrupted or empty")
+	}
+
+	// Check magic numbers for common file types
+	validMagicNumber := false
+
+	// JPEG magic numbers
+	if len(fileContent) >= 3 && fileContent[0] == 0xFF && fileContent[1] == 0xD8 && fileContent[2] == 0xFF {
+		validMagicNumber = true
+	}
+	// PNG magic number
+	if len(fileContent) >= 8 && fileContent[0] == 0x89 && fileContent[1] == 0x50 && fileContent[2] == 0x4E && fileContent[3] == 0x47 {
+		validMagicNumber = true
+	}
+	// PDF magic number
+	if len(fileContent) >= 4 && string(fileContent[0:4]) == "%PDF" {
+		validMagicNumber = true
+	}
+	// TIFF magic numbers
+	if len(fileContent) >= 4 && ((fileContent[0] == 0x49 && fileContent[1] == 0x49 && fileContent[2] == 0x2A && fileContent[3] == 0x00) ||
+		(fileContent[0] == 0x4D && fileContent[1] == 0x4D && fileContent[2] == 0x00 && fileContent[3] == 0x2A)) {
+		validMagicNumber = true
+	}
+
+	if !validMagicNumber {
+		return fmt.Errorf("file content does not match expected file type")
+	}
+
+	return nil
+}
+
+// Helper function to determine content type from filename
+func getContentTypeFromFilename(filename string) string {
+	lowerFilename := strings.ToLower(filename)
+
+	if strings.HasSuffix(lowerFilename, ".jpg") || strings.HasSuffix(lowerFilename, ".jpeg") {
+		return "image/jpeg"
+	} else if strings.HasSuffix(lowerFilename, ".png") {
+		return "image/png"
+	} else if strings.HasSuffix(lowerFilename, ".pdf") {
+		return "application/pdf"
+	} else if strings.HasSuffix(lowerFilename, ".tiff") || strings.HasSuffix(lowerFilename, ".tif") {
+		return "image/tiff"
+	} else if strings.HasSuffix(lowerFilename, ".gif") {
+		return "image/gif"
+	} else if strings.HasSuffix(lowerFilename, ".webp") {
+		return "image/webp"
+	}
+
+	return "application/octet-stream"
+}

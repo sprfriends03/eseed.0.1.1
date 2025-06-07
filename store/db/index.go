@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"app/env"
@@ -59,9 +60,12 @@ type DB struct {
 
 // Create a MongoDB client
 func createMongoClient(ctx context.Context) *mongo.Client {
-	uri := util.GetEnv("MONGODB_URI", "mongodb://localhost:27017")
-	dbName := util.GetEnv("MONGODB_DBNAME", "app")
+	uri := env.MongoUri
 	connectTimeout := 10 * time.Second
+
+	if uri == "" {
+		logrus.Fatal("MongoDB URI is empty - check env configuration")
+	}
 
 	opts := options.Client().
 		ApplyURI(uri).
@@ -79,14 +83,33 @@ func createMongoClient(ctx context.Context) *mongo.Client {
 		logrus.WithError(err).Fatalln("Failed to ping MongoDB")
 	}
 
-	logrus.Infoln("Connected to MongoDB at", uri, "using database", dbName)
+	logrus.Infoln("Connected to MongoDB at", uri)
 	return client
 }
 
 // Init initializes the database connections
 func Init(ctx context.Context) *DB {
 	client := createMongoClient(ctx)
-	db := client.Database(util.GetEnv("MONGODB_DBNAME", "app"))
+
+	// Extract database name from the URI
+	uri := env.MongoUri
+	dbName := "app" // default fallback
+	if uri != "" {
+		// Parse the URI to extract database name
+		// Format: mongodb://user:pass@host:port/database?options
+		// Find the last slash before any query parameters
+		if idx := strings.LastIndex(uri, "/"); idx != -1 && idx < len(uri)-1 {
+			afterSlash := uri[idx+1:]
+			if qIdx := strings.Index(afterSlash, "?"); qIdx != -1 {
+				dbName = afterSlash[:qIdx]
+			} else if afterSlash != "" {
+				dbName = afterSlash
+			}
+		}
+	}
+
+	logrus.Infoln("Using database name:", dbName, "extracted from URI:", uri)
+	db := client.Database(dbName)
 
 	_db = &DB{
 		ctx:          ctx,
@@ -105,6 +128,9 @@ func Init(ctx context.Context) *DB {
 		Client:       newClient(ctx, db.Collection(clientCollection)),
 		AuditLog:     newAuditLog(ctx, db.Collection(auditLogCollection)),
 	}
+
+	// Initialize root tenant and client
+	_db.initialize(ctx)
 
 	return _db
 }

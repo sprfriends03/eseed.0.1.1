@@ -58,6 +58,10 @@ const (
 	PermissionUserUpdateSelf  Permission = "user_update_self"
 	PermissionUserDeleteSelf  Permission = "user_delete_self"
 	PermissionUserPrivacySelf Permission = "user_privacy_self"
+
+	// KYC permissions
+	PermissionKYCView   Permission = "kyc_view"
+	PermissionKYCVerify Permission = "kyc_verify"
 )
 
 func PermissionTenantValues() []Permission {
@@ -82,6 +86,10 @@ func PermissionTenantValues() []Permission {
 		PermissionUserUpdateSelf,
 		PermissionUserDeleteSelf,
 		PermissionUserPrivacySelf,
+
+		// KYC permissions
+		PermissionKYCView,
+		PermissionKYCVerify,
 	}
 	return gopkg.UniqueFunc(slices.Sorted(slices.Values(permissions)), func(e Permission) Permission { return e })
 }
@@ -112,6 +120,10 @@ func PermissionRootValues() []Permission {
 		PermissionUserUpdateSelf,
 		PermissionUserDeleteSelf,
 		PermissionUserPrivacySelf,
+
+		// KYC permissions
+		PermissionKYCView,
+		PermissionKYCVerify,
 	}
 	return gopkg.UniqueFunc(slices.Sorted(slices.Values(permissions)), func(e Permission) Permission { return e })
 }

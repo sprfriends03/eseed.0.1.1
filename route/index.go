@@ -43,7 +43,7 @@ type handler = func(*middleware, *gin.Engine)
 func Bootstrap(store *store.Store) error {
 	mdw := newMdw(store)
 	gin.SetMode(gin.ReleaseMode)
-	binding.Validator = validate.New()
+	binding.Validator = validate.New() // Restore custom validator
 
 	app := gin.New()
 	app.NoRoute(mdw.NoRoute())
