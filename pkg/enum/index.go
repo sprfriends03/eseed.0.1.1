@@ -13,18 +13,22 @@ type Tenant string
 type Kind string
 
 const (
-	KindPermission Kind = "permission"
-	KindDataStatus Kind = "data_status"
-	KindDataAction Kind = "data_action"
+	KindPermission       Kind = "permission"
+	KindDataStatus       Kind = "data_status"
+	KindDataAction       Kind = "data_action"
+	KindMembershipStatus Kind = "membership_status"
+	KindMembershipType   Kind = "membership_type"
 	// KindMemberStatus Kind = "member_status" // Reverted
 	// KindKYCStatus    Kind = "kyc_status"    // Reverted
 )
 
 func Tags() map[string][]string {
 	return map[string][]string{
-		string(KindPermission): gopkg.MapFunc(PermissionValues(), func(e Permission) string { return string(e) }),
-		string(KindDataStatus): gopkg.MapFunc(DataStatusValues(), func(e DataStatus) string { return string(e) }),
-		string(KindDataAction): gopkg.MapFunc(DataActionValues(), func(e DataAction) string { return string(e) }),
+		string(KindPermission):       gopkg.MapFunc(PermissionValues(), func(e Permission) string { return string(e) }),
+		string(KindDataStatus):       gopkg.MapFunc(DataStatusValues(), func(e DataStatus) string { return string(e) }),
+		string(KindDataAction):       gopkg.MapFunc(DataActionValues(), func(e DataAction) string { return string(e) }),
+		string(KindMembershipStatus): gopkg.MapFunc(MembershipStatusValues(), func(e MembershipStatus) string { return string(e) }),
+		string(KindMembershipType):   gopkg.MapFunc(MembershipTypeValues(), func(e MembershipType) string { return string(e) }),
 		// string(KindMemberStatus): gopkg.MapFunc(MemberStatusValues(), func(e MemberStatus) string { return string(e) }), // Reverted
 		// string(KindKYCStatus):    gopkg.MapFunc(KYCStatusValues(), func(e KYCStatus) string { return string(e) }),       // Reverted
 	}
@@ -62,6 +66,14 @@ const (
 	// KYC permissions
 	PermissionKYCView   Permission = "kyc_view"
 	PermissionKYCVerify Permission = "kyc_verify"
+
+	// Membership Management Permissions
+	PermissionMembershipView   Permission = "membership_view"
+	PermissionMembershipCreate Permission = "membership_create"
+	PermissionMembershipUpdate Permission = "membership_update"
+	PermissionMembershipDelete Permission = "membership_delete"
+	PermissionMembershipRenew  Permission = "membership_renew"
+	PermissionMembershipManage Permission = "membership_manage" // Admin-level permission
 )
 
 func PermissionTenantValues() []Permission {
@@ -90,6 +102,14 @@ func PermissionTenantValues() []Permission {
 		// KYC permissions
 		PermissionKYCView,
 		PermissionKYCVerify,
+
+		// Membership Management Permissions
+		PermissionMembershipView,
+		PermissionMembershipCreate,
+		PermissionMembershipUpdate,
+		PermissionMembershipDelete,
+		PermissionMembershipRenew,
+		PermissionMembershipManage,
 	}
 	return gopkg.UniqueFunc(slices.Sorted(slices.Values(permissions)), func(e Permission) Permission { return e })
 }
@@ -124,6 +144,14 @@ func PermissionRootValues() []Permission {
 		// KYC permissions
 		PermissionKYCView,
 		PermissionKYCVerify,
+
+		// Membership Management Permissions
+		PermissionMembershipView,
+		PermissionMembershipCreate,
+		PermissionMembershipUpdate,
+		PermissionMembershipDelete,
+		PermissionMembershipRenew,
+		PermissionMembershipManage,
 	}
 	return gopkg.UniqueFunc(slices.Sorted(slices.Values(permissions)), func(e Permission) Permission { return e })
 }
@@ -214,6 +242,44 @@ func MemberStatusValues() []MemberStatus {
 		MemberStatusInactive,
 		MemberStatusSuspended,
 		MemberStatusTerminated,
+	}
+}
+
+// MembershipStatus represents the current status of a membership
+type MembershipStatus string
+
+const (
+	MembershipStatusPending   MembershipStatus = "pending_payment"
+	MembershipStatusActive    MembershipStatus = "active"
+	MembershipStatusExpired   MembershipStatus = "expired"
+	MembershipStatusCanceled  MembershipStatus = "canceled"
+	MembershipStatusSuspended MembershipStatus = "suspended"
+)
+
+func MembershipStatusValues() []MembershipStatus {
+	return []MembershipStatus{
+		MembershipStatusPending,
+		MembershipStatusActive,
+		MembershipStatusExpired,
+		MembershipStatusCanceled,
+		MembershipStatusSuspended,
+	}
+}
+
+// MembershipType represents the type of membership
+type MembershipType string
+
+const (
+	MembershipTypeBasic   MembershipType = "basic"
+	MembershipTypePremium MembershipType = "premium"
+	MembershipTypeVIP     MembershipType = "vip"
+)
+
+func MembershipTypeValues() []MembershipType {
+	return []MembershipType{
+		MembershipTypeBasic,
+		MembershipTypePremium,
+		MembershipTypeVIP,
 	}
 }
 

@@ -31,6 +31,14 @@ var (
 	RoleConflict            = New(http.StatusConflict, "role_conflict")
 	UserNotFound            = New(http.StatusNotFound, "user_not_found")
 	UserConflict            = New(http.StatusConflict, "user_conflict")
+
+	// Membership specific errors (only new ones not in cannabis.go)
+	MembershipNotFound      = New(http.StatusNotFound, "membership_not_found")
+	MembershipConflict      = New(http.StatusConflict, "membership_conflict")
+	InvalidMembershipType   = New(http.StatusBadRequest, "invalid_membership_type")
+	MembershipAlreadyActive = New(http.StatusConflict, "membership_already_active")
+	InsufficientSlots       = New(http.StatusConflict, "insufficient_slots")
+	MembershipRenewalFailed = New(http.StatusBadRequest, "membership_renewal_failed")
 )
 
 // Error represents an API error with HTTP status, error code, and descriptive text.
