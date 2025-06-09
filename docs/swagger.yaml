@@ -2093,6 +2093,184 @@ paths:
       summary: Get Membership Analytics (Admin)
       tags:
       - Membership Admin
+  # Plant Slot Management Definitions
+  db.PlantSlotBaseDto:
+    properties:
+      id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4617"
+      slot_number:
+        type: integer
+        example: 1
+      member_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4618"
+      status:
+        type: string
+        enum: [available, allocated, occupied, maintenance, out_of_service]
+        example: "allocated"
+      location:
+        type: string
+        example: "greenhouse-1"
+      position:
+        type: object
+        properties:
+          row:
+            type: integer
+            example: 1
+          column:
+            type: integer
+            example: 5
+      updated_at:
+        type: string
+        format: date-time
+        example: "2024-01-15T10:30:00Z"
+    type: object
+
+  db.PlantSlotDetailDto:
+    properties:
+      id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4617"
+      slot_number:
+        type: integer
+        example: 1
+      member_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4618"
+      membership_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4619"
+      status:
+        type: string
+        enum: [available, allocated, occupied, maintenance, out_of_service]
+        example: "occupied"
+      location:
+        type: string
+        example: "greenhouse-1"
+      position:
+        type: object
+        properties:
+          row:
+            type: integer
+            example: 1
+          column:
+            type: integer
+            example: 5
+      notes:
+        type: string
+        example: "Premium strain cultivation"
+      maintenance_log:
+        type: array
+        items:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date-time
+              example: "2024-01-10T09:00:00Z"
+            description:
+              type: string
+              example: "Deep cleaning and sterilization"
+            performed_by:
+              type: string
+              example: "654db9eca1f1b1bdbf3d4620"
+      last_clean_date:
+        type: string
+        format: date-time
+        example: "2024-01-10T09:00:00Z"
+      created_at:
+        type: string
+        format: date-time
+        example: "2024-01-01T10:00:00Z"
+      updated_at:
+        type: string
+        format: date-time
+        example: "2024-01-15T10:30:00Z"
+    type: object
+
+  route.SlotRequestRequest:
+    properties:
+      quantity:
+        type: integer
+        minimum: 1
+        maximum: 10
+        example: 2
+      preferred_location:
+        type: string
+        example: "greenhouse-1"
+    required:
+    - quantity
+    type: object
+
+  route.TransferSlotsRequest:
+    properties:
+      to_member_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4621"
+      slot_ids:
+        type: array
+        items:
+          type: string
+        example: ["654db9eca1f1b1bdbf3d4617", "654db9eca1f1b1bdbf3d4622"]
+      reason:
+        type: string
+        example: "Member upgrade transfer"
+    required:
+    - to_member_id
+    - slot_ids
+    - reason
+    type: object
+
+  route.MaintenanceRequest:
+    properties:
+      description:
+        type: string
+        example: "Irrigation system needs adjustment"
+      priority:
+        type: string
+        enum: [low, normal, high]
+        example: "normal"
+    required:
+    - description
+    type: object
+
+  route.UpdateSlotStatusRequest:
+    properties:
+      status:
+        type: string
+        enum: [available, allocated, occupied, maintenance, out_of_service]
+        example: "occupied"
+      reason:
+        type: string
+        example: "Started new cultivation cycle"
+    required:
+    - status
+    type: object
+
+  route.AssignSlotsRequest:
+    properties:
+      member_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4618"
+      membership_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4619"
+      slot_ids:
+        type: array
+        items:
+          type: string
+        example: ["654db9eca1f1b1bdbf3d4617", "654db9eca1f1b1bdbf3d4622"]
+      assigned_by:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4620"
+    required:
+    - member_id
+    - membership_id
+    - slot_ids
+    - assigned_by
+    type: object
+
 securityDefinitions:
   BasicAuth:
     type: basic

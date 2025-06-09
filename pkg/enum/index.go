@@ -18,6 +18,7 @@ const (
 	KindDataAction       Kind = "data_action"
 	KindMembershipStatus Kind = "membership_status"
 	KindMembershipType   Kind = "membership_type"
+	KindPlantSlotStatus  Kind = "plant_slot_status"
 	// KindMemberStatus Kind = "member_status" // Reverted
 	// KindKYCStatus    Kind = "kyc_status"    // Reverted
 )
@@ -29,6 +30,7 @@ func Tags() map[string][]string {
 		string(KindDataAction):       gopkg.MapFunc(DataActionValues(), func(e DataAction) string { return string(e) }),
 		string(KindMembershipStatus): gopkg.MapFunc(MembershipStatusValues(), func(e MembershipStatus) string { return string(e) }),
 		string(KindMembershipType):   gopkg.MapFunc(MembershipTypeValues(), func(e MembershipType) string { return string(e) }),
+		string(KindPlantSlotStatus):  gopkg.MapFunc(PlantSlotStatusValues(), func(e PlantSlotStatus) string { return string(e) }),
 		// string(KindMemberStatus): gopkg.MapFunc(MemberStatusValues(), func(e MemberStatus) string { return string(e) }), // Reverted
 		// string(KindKYCStatus):    gopkg.MapFunc(KYCStatusValues(), func(e KYCStatus) string { return string(e) }),       // Reverted
 	}
@@ -74,6 +76,15 @@ const (
 	PermissionMembershipDelete Permission = "membership_delete"
 	PermissionMembershipRenew  Permission = "membership_renew"
 	PermissionMembershipManage Permission = "membership_manage" // Admin-level permission
+
+	// Plant Slot Management Permissions
+	PermissionPlantSlotView     Permission = "plant_slot_view"
+	PermissionPlantSlotCreate   Permission = "plant_slot_create"
+	PermissionPlantSlotUpdate   Permission = "plant_slot_update"
+	PermissionPlantSlotDelete   Permission = "plant_slot_delete"
+	PermissionPlantSlotManage   Permission = "plant_slot_manage" // Admin-level
+	PermissionPlantSlotTransfer Permission = "plant_slot_transfer"
+	PermissionPlantSlotAssign   Permission = "plant_slot_assign"
 )
 
 func PermissionTenantValues() []Permission {
@@ -110,6 +121,15 @@ func PermissionTenantValues() []Permission {
 		PermissionMembershipDelete,
 		PermissionMembershipRenew,
 		PermissionMembershipManage,
+
+		// Plant Slot Management Permissions
+		PermissionPlantSlotView,
+		PermissionPlantSlotCreate,
+		PermissionPlantSlotUpdate,
+		PermissionPlantSlotDelete,
+		PermissionPlantSlotManage,
+		PermissionPlantSlotTransfer,
+		PermissionPlantSlotAssign,
 	}
 	return gopkg.UniqueFunc(slices.Sorted(slices.Values(permissions)), func(e Permission) Permission { return e })
 }
@@ -152,6 +172,15 @@ func PermissionRootValues() []Permission {
 		PermissionMembershipDelete,
 		PermissionMembershipRenew,
 		PermissionMembershipManage,
+
+		// Plant Slot Management Permissions
+		PermissionPlantSlotView,
+		PermissionPlantSlotCreate,
+		PermissionPlantSlotUpdate,
+		PermissionPlantSlotDelete,
+		PermissionPlantSlotManage,
+		PermissionPlantSlotTransfer,
+		PermissionPlantSlotAssign,
 	}
 	return gopkg.UniqueFunc(slices.Sorted(slices.Values(permissions)), func(e Permission) Permission { return e })
 }
@@ -280,6 +309,27 @@ func MembershipTypeValues() []MembershipType {
 		MembershipTypeBasic,
 		MembershipTypePremium,
 		MembershipTypeVIP,
+	}
+}
+
+// PlantSlotStatus represents the current status of a plant slot
+type PlantSlotStatus string
+
+const (
+	PlantSlotStatusAvailable    PlantSlotStatus = "available"
+	PlantSlotStatusAllocated    PlantSlotStatus = "allocated"
+	PlantSlotStatusOccupied     PlantSlotStatus = "occupied"
+	PlantSlotStatusMaintenance  PlantSlotStatus = "maintenance"
+	PlantSlotStatusOutOfService PlantSlotStatus = "out_of_service"
+)
+
+func PlantSlotStatusValues() []PlantSlotStatus {
+	return []PlantSlotStatus{
+		PlantSlotStatusAvailable,
+		PlantSlotStatusAllocated,
+		PlantSlotStatusOccupied,
+		PlantSlotStatusMaintenance,
+		PlantSlotStatusOutOfService,
 	}
 }
 

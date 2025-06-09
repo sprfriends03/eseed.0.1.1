@@ -23,6 +23,14 @@ var (
 	PlantSlotNotFound       = New(http.StatusNotFound, "plant_slot_not_found")
 	PlantSlotAllocationFull = New(http.StatusConflict, "plant_slot_allocation_full")
 
+	// Additional plant slot errors per task 1.6
+	PlantSlotInsufficientSlots      = New(http.StatusConflict, "plant_slot_insufficient_slots")
+	PlantSlotMembershipRequired     = New(http.StatusForbidden, "plant_slot_membership_required")
+	PlantSlotTransferFailed         = New(http.StatusConflict, "plant_slot_transfer_failed")
+	PlantSlotMaintenanceRequired    = New(http.StatusConflict, "plant_slot_maintenance_required")
+	PlantSlotAlreadyAllocated       = New(http.StatusConflict, "plant_slot_already_allocated")
+	PlantSlotOccupiedCannotTransfer = New(http.StatusConflict, "plant_slot_occupied_cannot_transfer")
+
 	// Plant related errors
 	PlantNotFound           = New(http.StatusNotFound, "plant_not_found")
 	PlantAlreadyHarvested   = New(http.StatusConflict, "plant_already_harvested")
