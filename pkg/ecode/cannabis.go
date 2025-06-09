@@ -39,6 +39,16 @@ var (
 	PlantImageUploadFailed  = New(http.StatusInternalServerError, "plant_image_upload_failed")
 	PlantLimitExceeded      = New(http.StatusForbidden, "plant_limit_exceeded")
 
+	// Additional plant management errors for Task 1.7
+	PlantSlotRequired       = New(http.StatusBadRequest, "plant_slot_required")
+	PlantUnauthorizedOwner  = New(http.StatusForbidden, "plant_unauthorized_owner")
+	PlantNotReadyForHarvest = New(http.StatusConflict, "plant_not_ready_for_harvest")
+	PlantHealthCritical     = New(http.StatusConflict, "plant_health_critical")
+	PlantCareRecordInvalid  = New(http.StatusBadRequest, "plant_care_record_invalid")
+	PlantTypeNotAvailable   = New(http.StatusConflict, "plant_type_not_available")
+	PlantSlotOccupied       = New(http.StatusConflict, "plant_slot_occupied")
+	PlantLifecycleViolation = New(http.StatusConflict, "plant_lifecycle_violation")
+
 	// Harvest related errors
 	HarvestNotReady         = New(http.StatusConflict, "harvest_not_ready")
 	HarvestNotFound         = New(http.StatusNotFound, "harvest_not_found")

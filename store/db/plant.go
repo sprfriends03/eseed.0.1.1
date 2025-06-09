@@ -4,8 +4,10 @@ import (
 	"app/pkg/enum"
 	"app/pkg/validate"
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/nhnghia272/gopkg"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -36,6 +38,182 @@ type PlantDomain struct {
 func (s *PlantDomain) Validate() error {
 	s.BeforeSave()
 	return validate.New().Validate(s)
+}
+
+// DTO structures following PlantSlotDomain pattern
+type PlantBaseDto struct {
+	ID              string     `json:"id"`
+	Name            string     `json:"name"`
+	Status          string     `json:"status"`
+	Strain          string     `json:"strain"`
+	Health          int        `json:"health"`
+	PlantedDate     *time.Time `json:"planted_date"`
+	ExpectedHarvest *time.Time `json:"expected_harvest"`
+	UpdatedAt       *time.Time `json:"updated_at"`
+}
+
+type PlantDetailDto struct {
+	PlantBaseDto  `json:",inline"`
+	PlantTypeID   string     `json:"plant_type_id"`
+	PlantSlotID   string     `json:"plant_slot_id"`
+	MemberID      string     `json:"member_id"`
+	ActualHarvest *time.Time `json:"actual_harvest,omitempty"`
+	Height        *float64   `json:"height,omitempty"`
+	Images        []string   `json:"images,omitempty"`
+	Notes         string     `json:"notes,omitempty"`
+	HarvestID     string     `json:"harvest_id,omitempty"`
+	NFTTokenID    string     `json:"nft_token_id,omitempty"`
+	CreatedAt     *time.Time `json:"created_at"`
+}
+
+type PlantCareDto struct {
+	PlantBaseDto `json:",inline"`
+	LastCareDate *time.Time `json:"last_care_date"`
+	CareActions  int        `json:"care_actions"`
+	HealthTrend  string     `json:"health_trend"` // improving, stable, declining
+}
+
+// DTO methods following PlantSlotDomain pattern
+func (s PlantDomain) BaseDto() *PlantBaseDto {
+	return &PlantBaseDto{
+		ID:              SID(s.ID),
+		Name:            gopkg.Value(s.Name),
+		Status:          gopkg.Value(s.Status),
+		Strain:          gopkg.Value(s.Strain),
+		Health:          gopkg.Value(s.Health),
+		PlantedDate:     s.PlantedDate,
+		ExpectedHarvest: s.ExpectedHarvest,
+		UpdatedAt:       s.UpdatedAt,
+	}
+}
+
+func (s PlantDomain) DetailDto() *PlantDetailDto {
+	return &PlantDetailDto{
+		PlantBaseDto:  *s.BaseDto(),
+		PlantTypeID:   gopkg.Value(s.PlantTypeID),
+		PlantSlotID:   gopkg.Value(s.PlantSlotID),
+		MemberID:      gopkg.Value(s.MemberID),
+		ActualHarvest: s.ActualHarvest,
+		Height:        s.Height,
+		Images:        gopkg.Value(s.Images),
+		Notes:         gopkg.Value(s.Notes),
+		HarvestID:     gopkg.Value(s.HarvestID),
+		NFTTokenID:    gopkg.Value(s.NFTTokenID),
+		CreatedAt:     s.CreatedAt,
+	}
+}
+
+func (s PlantDomain) CareDto() *PlantCareDto {
+	// Note: LastCareDate and CareActions would be populated from care records
+	// This is a placeholder implementation - in practice, these would be calculated
+	// from care record aggregations in the business logic layer
+	return &PlantCareDto{
+		PlantBaseDto: *s.BaseDto(),
+		LastCareDate: nil,      // To be populated by business logic
+		CareActions:  0,        // To be populated by business logic
+		HealthTrend:  "stable", // To be calculated by business logic
+	}
+}
+
+// PlantQuery following PlantSlotQuery pattern
+type PlantQuery struct {
+	Query           `bson:",inline"`
+	Status          *string      `json:"status" form:"status"`
+	MemberID        *string      `json:"member_id" form:"member_id"`
+	PlantSlotID     *string      `json:"plant_slot_id" form:"plant_slot_id"`
+	Strain          *string      `json:"strain" form:"strain"`
+	HealthMin       *int         `json:"health_min" form:"health_min"`
+	HealthMax       *int         `json:"health_max" form:"health_max"`
+	ReadyForHarvest *bool        `json:"ready_for_harvest" form:"ready_for_harvest"`
+	TenantId        *enum.Tenant `json:"tenant_id" form:"tenant_id"`
+}
+
+func (s *PlantQuery) Build() *PlantQuery {
+	query := Query{
+		Page:   s.Page,
+		Limit:  s.Limit,
+		Sorts:  s.Sorts,
+		Filter: M{},
+	}
+
+	if s.Status != nil {
+		query.Filter["status"] = *s.Status
+	}
+	if s.MemberID != nil {
+		query.Filter["member_id"] = *s.MemberID
+	}
+	if s.PlantSlotID != nil {
+		query.Filter["plant_slot_id"] = *s.PlantSlotID
+	}
+	if s.Strain != nil {
+		query.Filter["strain"] = primitive.Regex{Pattern: *s.Strain, Options: "i"}
+	}
+	if s.HealthMin != nil {
+		if existing, ok := query.Filter["health"].(M); ok {
+			existing["$gte"] = *s.HealthMin
+		} else {
+			query.Filter["health"] = M{"$gte": *s.HealthMin}
+		}
+	}
+	if s.HealthMax != nil {
+		if existing, ok := query.Filter["health"].(M); ok {
+			existing["$lte"] = *s.HealthMax
+		} else {
+			query.Filter["health"] = M{"$lte": *s.HealthMax}
+		}
+	}
+	if s.ReadyForHarvest != nil && *s.ReadyForHarvest {
+		query.Filter["status"] = "flowering"
+		query.Filter["expected_harvest"] = M{"$lte": time.Now()}
+	}
+	if s.TenantId != nil {
+		query.Filter["tenant_id"] = *s.TenantId
+	}
+
+	s.Query = query
+	return s
+}
+
+// Additional analytics and reporting structures
+type PlantAnalyticsQuery struct {
+	TenantId  *enum.Tenant `json:"tenant_id"`
+	MemberID  *string      `json:"member_id"`
+	TimeRange *string      `json:"time_range"` // week, month, quarter, year
+	GroupBy   *string      `json:"group_by"`   // strain, status, member
+}
+
+type PlantHealthAlert struct {
+	PlantID      string    `json:"plant_id"`
+	MemberID     string    `json:"member_id"`
+	AlertType    string    `json:"alert_type"` // critical_health, overdue_care, harvest_ready
+	Severity     string    `json:"severity"`   // low, medium, high, critical
+	Message      string    `json:"message"`
+	CreatedAt    time.Time `json:"created_at"`
+	DaysOverdue  *int      `json:"days_overdue,omitempty"`
+	HealthRating *int      `json:"health_rating,omitempty"`
+}
+
+type PlantGrowthAnalytics struct {
+	PlantID          string            `json:"plant_id"`
+	GrowthStages     []GrowthStageData `json:"growth_stages"`
+	HealthHistory    []HealthDataPoint `json:"health_history"`
+	CareFrequency    map[string]int    `json:"care_frequency"`
+	PredictedHarvest *time.Time        `json:"predicted_harvest"`
+	YieldEstimate    *float64          `json:"yield_estimate"`
+}
+
+type GrowthStageData struct {
+	Stage     string     `json:"stage"`
+	StartDate *time.Time `json:"start_date"`
+	EndDate   *time.Time `json:"end_date,omitempty"`
+	Duration  *int       `json:"duration_days,omitempty"`
+	AvgHealth *float64   `json:"avg_health"`
+}
+
+type HealthDataPoint struct {
+	Date         time.Time `json:"date"`
+	HealthRating int       `json:"health_rating"`
+	CareActions  []string  `json:"care_actions"`
 }
 
 type plant struct {
@@ -240,4 +418,318 @@ func (s *plant) Delete(ctx context.Context, id string) error {
 
 func (s *plant) Count(ctx context.Context, filter M) (int64, error) {
 	return s.repo.CountDocuments(ctx, Query{Filter: filter}), nil
+}
+
+// FindAll with query support following PlantSlotDomain pattern
+func (s *plant) FindAll(ctx context.Context, query *PlantQuery) ([]*PlantDomain, error) {
+	var domains []*PlantDomain
+
+	opts := options.Find().SetSort(bson.D{{Key: "planted_date", Value: -1}})
+
+	// Apply pagination
+	if query.Page > 0 && query.Limit > 0 {
+		skip := (query.Page - 1) * query.Limit
+		opts.SetSkip(skip).SetLimit(query.Limit)
+	}
+
+	return domains, s.repo.FindAll(ctx, query.Query, &domains, opts)
+}
+
+// UpdateFields for partial updates
+func (s *plant) UpdateFields(ctx context.Context, id string, updates M) error {
+	updates["updated_at"] = time.Now()
+	return s.repo.UpdateOne(ctx,
+		M{"_id": OID(id)},
+		M{"$set": updates},
+	)
+}
+
+// Analytics and reporting methods following plant slot pattern
+func (s *plant) GetStatusStatistics(ctx context.Context, tenantID enum.Tenant, memberID *string) (map[string]int64, error) {
+	pipeline := []bson.M{
+		{"$match": M{"tenant_id": tenantID}},
+	}
+
+	if memberID != nil {
+		pipeline[0]["$match"].(M)["member_id"] = *memberID
+	}
+
+	pipeline = append(pipeline,
+		bson.M{"$group": bson.M{
+			"_id":   "$status",
+			"count": bson.M{"$sum": 1},
+		}},
+	)
+
+	cursor, err := s.repo.col.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	result := make(map[string]int64)
+	for cursor.Next(ctx) {
+		var doc struct {
+			ID    string `bson:"_id"`
+			Count int64  `bson:"count"`
+		}
+		if err := cursor.Decode(&doc); err != nil {
+			continue
+		}
+		result[doc.ID] = doc.Count
+	}
+
+	return result, nil
+}
+
+func (s *plant) GetHealthStatistics(ctx context.Context, tenantID enum.Tenant, memberID *string) (map[string]int64, error) {
+	pipeline := []bson.M{
+		{"$match": M{"tenant_id": tenantID}},
+	}
+
+	if memberID != nil {
+		pipeline[0]["$match"].(M)["member_id"] = *memberID
+	}
+
+	pipeline = append(pipeline,
+		bson.M{"$bucket": bson.M{
+			"groupBy":    "$health",
+			"boundaries": []int{1, 4, 7, 11}, // Poor (1-3), Fair (4-6), Good (7-10)
+			"default":    "unknown",
+			"output": bson.M{
+				"count": bson.M{"$sum": 1},
+			},
+		}},
+	)
+
+	cursor, err := s.repo.col.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	result := make(map[string]int64)
+	healthRanges := map[int]string{1: "poor", 4: "fair", 7: "good"}
+
+	for cursor.Next(ctx) {
+		var doc struct {
+			ID    interface{} `bson:"_id"`
+			Count int64       `bson:"count"`
+		}
+		if err := cursor.Decode(&doc); err != nil {
+			continue
+		}
+
+		if boundary, ok := doc.ID.(int32); ok {
+			if label, exists := healthRanges[int(boundary)]; exists {
+				result[label] = doc.Count
+			}
+		}
+	}
+
+	return result, nil
+}
+
+func (s *plant) GetStrainStatistics(ctx context.Context, tenantID enum.Tenant, memberID *string) ([]map[string]interface{}, error) {
+	pipeline := []bson.M{
+		{"$match": M{"tenant_id": tenantID}},
+	}
+
+	if memberID != nil {
+		pipeline[0]["$match"].(M)["member_id"] = *memberID
+	}
+
+	pipeline = append(pipeline,
+		bson.M{"$group": bson.M{
+			"_id":        "$strain",
+			"count":      bson.M{"$sum": 1},
+			"avg_health": bson.M{"$avg": "$health"},
+		}},
+		bson.M{"$sort": bson.M{"count": -1}},
+		bson.M{"$limit": 10}, // Top 10 strains
+	)
+
+	cursor, err := s.repo.col.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var results []map[string]interface{}
+	for cursor.Next(ctx) {
+		var doc map[string]interface{}
+		if err := cursor.Decode(&doc); err != nil {
+			continue
+		}
+		results = append(results, doc)
+	}
+
+	return results, nil
+}
+
+func (s *plant) GetGrowthCycleMetrics(ctx context.Context, tenantID enum.Tenant, timeRange *string) (map[string]interface{}, error) {
+	now := time.Now()
+	var startDate time.Time
+
+	switch gopkg.Value(timeRange) {
+	case "week":
+		startDate = now.AddDate(0, 0, -7)
+	case "month":
+		startDate = now.AddDate(0, -1, 0)
+	case "quarter":
+		startDate = now.AddDate(0, -3, 0)
+	case "year":
+		startDate = now.AddDate(-1, 0, 0)
+	default:
+		startDate = now.AddDate(0, -1, 0) // Default to month
+	}
+
+	pipeline := []bson.M{
+		{"$match": bson.M{
+			"tenant_id":    tenantID,
+			"planted_date": bson.M{"$gte": startDate},
+		}},
+		{"$group": bson.M{
+			"_id":          nil,
+			"total_plants": bson.M{"$sum": 1},
+			"avg_health":   bson.M{"$avg": "$health"},
+			"avg_days_to_harvest": bson.M{"$avg": bson.M{
+				"$divide": []interface{}{
+					bson.M{"$subtract": []interface{}{"$expected_harvest", "$planted_date"}},
+					86400000, // Convert milliseconds to days
+				},
+			}},
+			"completed_cycles": bson.M{"$sum": bson.M{
+				"$cond": []interface{}{
+					bson.M{"$eq": []interface{}{"$status", "harvested"}},
+					1,
+					0,
+				},
+			}},
+		}},
+	}
+
+	cursor, err := s.repo.col.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	if cursor.Next(ctx) {
+		var result map[string]interface{}
+		if err := cursor.Decode(&result); err != nil {
+			return nil, err
+		}
+		delete(result, "_id") // Remove the null _id field
+		return result, nil
+	}
+
+	return map[string]interface{}{}, nil
+}
+
+func (s *plant) GetUpcomingHarvests(ctx context.Context, tenantID enum.Tenant, daysAhead int) ([]map[string]interface{}, error) {
+	endDate := time.Now().AddDate(0, 0, daysAhead)
+
+	pipeline := []bson.M{
+		{"$match": bson.M{
+			"tenant_id": tenantID,
+			"status":    bson.M{"$in": []string{"flowering", "vegetative"}},
+			"expected_harvest": bson.M{
+				"$gte": time.Now(),
+				"$lte": endDate,
+			},
+		}},
+		{"$lookup": bson.M{
+			"from":         "members",
+			"localField":   "member_id",
+			"foreignField": "_id",
+			"as":           "member",
+		}},
+		{"$unwind": "$member"},
+		{"$project": bson.M{
+			"plant_id":         "$_id",
+			"name":             1,
+			"strain":           1,
+			"status":           1,
+			"expected_harvest": 1,
+			"member_email":     "$member.email",
+			"days_until_harvest": bson.M{
+				"$divide": []interface{}{
+					bson.M{"$subtract": []interface{}{"$expected_harvest", "$$NOW"}},
+					86400000, // Convert to days
+				},
+			},
+		}},
+		{"$sort": bson.M{"expected_harvest": 1}},
+	}
+
+	cursor, err := s.repo.col.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var results []map[string]interface{}
+	for cursor.Next(ctx) {
+		var doc map[string]interface{}
+		if err := cursor.Decode(&doc); err != nil {
+			continue
+		}
+		results = append(results, doc)
+	}
+
+	return results, nil
+}
+
+func (s *plant) GetHealthAlerts(ctx context.Context, tenantID enum.Tenant) ([]*PlantHealthAlert, error) {
+	now := time.Now()
+	var alerts []*PlantHealthAlert
+
+	// Find plants with critical health (health <= 3)
+	criticalHealthPlants, err := s.FindAll(ctx, &PlantQuery{
+		Query: Query{
+			Filter: M{
+				"tenant_id": tenantID,
+				"status":    M{"$nin": []string{"harvested", "dead"}},
+				"health":    M{"$lte": 3},
+			},
+		},
+	})
+	if err == nil {
+		for _, plant := range criticalHealthPlants {
+			alerts = append(alerts, &PlantHealthAlert{
+				PlantID:      SID(plant.ID),
+				MemberID:     gopkg.Value(plant.MemberID),
+				AlertType:    "critical_health",
+				Severity:     "high",
+				Message:      fmt.Sprintf("Plant '%s' has critical health rating of %d", gopkg.Value(plant.Name), gopkg.Value(plant.Health)),
+				CreatedAt:    now,
+				HealthRating: plant.Health,
+			})
+		}
+	}
+
+	// Find plants ready for harvest (flowering status + past expected harvest date)
+	readyForHarvest, err := s.FindReadyForHarvest(ctx, tenantID)
+	if err == nil {
+		for _, plant := range readyForHarvest {
+			daysOverdue := int(now.Sub(*plant.ExpectedHarvest).Hours() / 24)
+			severity := "medium"
+			if daysOverdue > 7 {
+				severity = "high"
+			}
+
+			alerts = append(alerts, &PlantHealthAlert{
+				PlantID:     SID(plant.ID),
+				MemberID:    gopkg.Value(plant.MemberID),
+				AlertType:   "harvest_ready",
+				Severity:    severity,
+				Message:     fmt.Sprintf("Plant '%s' is ready for harvest (%d days overdue)", gopkg.Value(plant.Name), daysOverdue),
+				CreatedAt:   now,
+				DaysOverdue: &daysOverdue,
+			})
+		}
+	}
+
+	return alerts, nil
 }

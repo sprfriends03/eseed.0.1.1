@@ -85,6 +85,15 @@ const (
 	PermissionPlantSlotManage   Permission = "plant_slot_manage" // Admin-level
 	PermissionPlantSlotTransfer Permission = "plant_slot_transfer"
 	PermissionPlantSlotAssign   Permission = "plant_slot_assign"
+
+	// Plant Management Permissions
+	PermissionPlantView    Permission = "plant_view"
+	PermissionPlantCreate  Permission = "plant_create"
+	PermissionPlantUpdate  Permission = "plant_update"
+	PermissionPlantDelete  Permission = "plant_delete"
+	PermissionPlantManage  Permission = "plant_manage"  // Admin-level
+	PermissionPlantCare    Permission = "plant_care"    // Record care activities
+	PermissionPlantHarvest Permission = "plant_harvest" // Harvest management
 )
 
 func PermissionTenantValues() []Permission {
@@ -130,6 +139,15 @@ func PermissionTenantValues() []Permission {
 		PermissionPlantSlotManage,
 		PermissionPlantSlotTransfer,
 		PermissionPlantSlotAssign,
+
+		// Plant Management Permissions
+		PermissionPlantView,
+		PermissionPlantCreate,
+		PermissionPlantUpdate,
+		PermissionPlantDelete,
+		PermissionPlantManage,
+		PermissionPlantCare,
+		PermissionPlantHarvest,
 	}
 	return gopkg.UniqueFunc(slices.Sorted(slices.Values(permissions)), func(e Permission) Permission { return e })
 }
@@ -181,6 +199,15 @@ func PermissionRootValues() []Permission {
 		PermissionPlantSlotManage,
 		PermissionPlantSlotTransfer,
 		PermissionPlantSlotAssign,
+
+		// Plant Management Permissions
+		PermissionPlantView,
+		PermissionPlantCreate,
+		PermissionPlantUpdate,
+		PermissionPlantDelete,
+		PermissionPlantManage,
+		PermissionPlantCare,
+		PermissionPlantHarvest,
 	}
 	return gopkg.UniqueFunc(slices.Sorted(slices.Values(permissions)), func(e Permission) Permission { return e })
 }

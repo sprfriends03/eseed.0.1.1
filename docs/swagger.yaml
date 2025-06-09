@@ -2093,6 +2093,893 @@ paths:
       summary: Get Membership Analytics (Admin)
       tags:
       - Membership Admin
+
+  # Plant Management API Endpoints
+  /plants/v1/my-plants:
+    get:
+      summary: Get My Plants
+      tags:
+      - Plants
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        type: string
+        enum: [seedling, vegetative, flowering, harvested, dead]
+        description: Filter by plant status
+      - name: strain
+        in: query
+        type: string
+        description: Filter by plant strain (partial match)
+      - name: health_min
+        in: query
+        type: integer
+        minimum: 1
+        maximum: 10
+        description: Minimum health rating filter
+      - name: health_max
+        in: query
+        type: integer
+        minimum: 1
+        maximum: 10
+        description: Maximum health rating filter
+      - name: ready_for_harvest
+        in: query
+        type: boolean
+        description: Filter plants ready for harvest
+      - name: page
+        in: query
+        type: integer
+        minimum: 1
+        default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+        description: Items per page
+      responses:
+        "200":
+          description: Plants retrieved successfully
+          schema:
+            type: object
+            properties:
+              plants:
+                type: array
+                items:
+                  $ref: '#/definitions/db.PlantBaseDto'
+              total:
+                type: integer
+              count:
+                type: integer
+              page:
+                type: integer
+              limit:
+                type: integer
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Insufficient permissions
+
+  /plants/v1/create:
+    post:
+      summary: Create Plant
+      tags:
+      - Plants
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/route.CreatePlantRequest'
+      responses:
+        "201":
+          description: Plant created successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              plant:
+                $ref: '#/definitions/db.PlantDetailDto'
+        "400":
+          description: Bad Request - Invalid input data
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Plant slot not owned or unavailable
+        "409":
+          description: Conflict - Plant slot already occupied
+
+  /plants/v1/{id}:
+    get:
+      summary: Get Plant Details
+      tags:
+      - Plants
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Plant ID
+      responses:
+        "200":
+          description: Plant details retrieved successfully
+          schema:
+            type: object
+            properties:
+              plant:
+                $ref: '#/definitions/db.PlantDetailDto'
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Not authorized to view this plant
+        "404":
+          description: Plant not found
+
+  /plants/v1/{id}/status:
+    put:
+      summary: Update Plant Status
+      tags:
+      - Plants
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Plant ID
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/route.UpdatePlantStatusRequest'
+      responses:
+        "200":
+          description: Plant status updated successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              plant:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                  updated_at:
+                    type: string
+                    format: date-time
+        "400":
+          description: Bad Request - Invalid status transition
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Not authorized to update this plant
+        "404":
+          description: Plant not found
+
+  /plants/v1/{id}/care:
+    put:
+      summary: Record Care Activities
+      tags:
+      - Plants
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Plant ID
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/route.RecordCareRequest'
+      responses:
+        "200":
+          description: Care record added successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              care_record:
+                $ref: '#/definitions/db.CareRecordBaseDto'
+        "400":
+          description: Bad Request - Invalid care data
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Not authorized to record care for this plant
+        "404":
+          description: Plant not found
+
+  /plants/v1/{id}/images:
+    post:
+      summary: Upload Plant Images
+      tags:
+      - Plants
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Plant ID
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/route.UploadPlantImageRequest'
+      responses:
+        "200":
+          description: Plant image uploaded successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              image_url:
+                type: string
+        "400":
+          description: Bad Request - Invalid image data
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Not authorized to upload images for this plant
+        "404":
+          description: Plant not found
+
+  /plants/v1/{id}/harvest:
+    post:
+      summary: Harvest Plant
+      tags:
+      - Plants
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Plant ID
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/route.HarvestPlantRequest'
+      responses:
+        "200":
+          description: Plant harvested successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              harvest:
+                $ref: '#/definitions/db.HarvestDto'
+        "400":
+          description: Bad Request - Invalid harvest data
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Not authorized to harvest this plant
+        "404":
+          description: Plant not found
+        "409":
+          description: Conflict - Plant not ready for harvest
+
+  /plants/v1/admin/all:
+    get:
+      summary: Get All Plants (Admin)
+      tags:
+      - Plants Admin
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        type: string
+        enum: [seedling, vegetative, flowering, harvested, dead]
+        description: Filter by plant status
+      - name: member_id
+        in: query
+        type: string
+        description: Filter by specific member
+      - name: plant_slot_id
+        in: query
+        type: string
+        description: Filter by specific plant slot
+      - name: strain
+        in: query
+        type: string
+        description: Filter by plant strain
+      - name: page
+        in: query
+        type: integer
+        minimum: 1
+        default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+        description: Items per page
+      responses:
+        "200":
+          description: All plants retrieved successfully
+          schema:
+            type: object
+            properties:
+              plants:
+                type: array
+                items:
+                  $ref: '#/definitions/db.PlantBaseDto'
+              total:
+                type: integer
+              count:
+                type: integer
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Admin permissions required
+
+  /plants/v1/admin/analytics:
+    get:
+      summary: Get Plant Analytics (Admin)
+      tags:
+      - Plants Admin
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: member_id
+        in: query
+        type: string
+        description: Analytics for specific member
+      - name: time_range
+        in: query
+        type: string
+        enum: [week, month, quarter, year]
+        description: Time range for analytics
+      responses:
+        "200":
+          description: Plant analytics retrieved successfully
+          schema:
+            type: object
+            properties:
+              analytics:
+                $ref: '#/definitions/db.PlantAnalytics'
+              generated_at:
+                type: string
+                format: date-time
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Admin permissions required
+
+  /plants/v1/admin/health-alerts:
+    get:
+      summary: Get Health Alerts (Admin)
+      tags:
+      - Plants Admin
+      security:
+      - BearerAuth: []
+      responses:
+        "200":
+          description: Health alerts retrieved successfully
+          schema:
+            type: object
+            properties:
+              alerts:
+                type: array
+                items:
+                  $ref: '#/definitions/db.PlantHealthAlert'
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Admin permissions required
+
+  /plants/v1/admin/{id}/force-status:
+    put:
+      summary: Force Status Update (Admin)
+      tags:
+      - Plants Admin
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Plant ID
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/route.ForceStatusUpdateRequest'
+      responses:
+        "200":
+          description: Plant status force updated successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              plant:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                  updated_at:
+                    type: string
+                    format: date-time
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Admin permissions required
+        "404":
+          description: Plant not found
+
+  /plants/v1/admin/harvest-ready:
+    get:
+      summary: Get Harvest Ready Plants (Admin)
+      tags:
+      - Plants Admin
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: days_ahead
+        in: query
+        type: integer
+        minimum: 1
+        default: 7
+        description: Look-ahead period in days
+      responses:
+        "200":
+          description: Harvest ready plants retrieved successfully
+          schema:
+            type: object
+            properties:
+              harvest_ready:
+                type: array
+                items:
+                  $ref: '#/definitions/db.PlantHarvestReadyDto'
+              total:
+                type: integer
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Admin permissions required
+
+definitions:
+  # Plant Management Definitions
+  db.PlantBaseDto:
+    properties:
+      id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4617"
+      name:
+        type: string
+        example: "Purple Haze #1"
+      status:
+        type: string
+        enum: [seedling, vegetative, flowering, harvested, dead]
+        example: "flowering"
+      strain:
+        type: string
+        example: "Purple Haze"
+      health:
+        type: integer
+        minimum: 1
+        maximum: 10
+        example: 8
+      planted_date:
+        type: string
+        format: date-time
+        example: "2024-01-01T10:00:00Z"
+      expected_harvest:
+        type: string
+        format: date-time
+        example: "2024-04-01T10:00:00Z"
+      updated_at:
+        type: string
+        format: date-time
+        example: "2024-03-15T10:30:00Z"
+    type: object
+
+  db.PlantDetailDto:
+    properties:
+      id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4617"
+      name:
+        type: string
+        example: "Purple Haze #1"
+      status:
+        type: string
+        enum: [seedling, vegetative, flowering, harvested, dead]
+        example: "flowering"
+      strain:
+        type: string
+        example: "Purple Haze"
+      health:
+        type: integer
+        minimum: 1
+        maximum: 10
+        example: 9
+      planted_date:
+        type: string
+        format: date-time
+        example: "2024-01-01T10:00:00Z"
+      expected_harvest:
+        type: string
+        format: date-time
+        example: "2024-04-01T10:00:00Z"
+      plant_type_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4618"
+      plant_slot_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4619"
+      member_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4620"
+      actual_harvest:
+        type: string
+        format: date-time
+        example: "2024-04-01T10:00:00Z"
+      height:
+        type: number
+        format: float
+        example: 45.5
+      images:
+        type: array
+        items:
+          type: string
+        example: ["image_url_1", "image_url_2"]
+      notes:
+        type: string
+        example: "Premium strain cultivation"
+      harvest_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4621"
+      nft_token_id:
+        type: string
+        example: "token_123"
+      created_at:
+        type: string
+        format: date-time
+        example: "2024-01-01T10:00:00Z"
+    type: object
+
+  route.CreatePlantRequest:
+    properties:
+      plant_slot_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4619"
+      plant_type_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4618"
+      name:
+        type: string
+        example: "Purple Haze #1"
+      notes:
+        type: string
+        example: "Premium strain cultivation"
+    required:
+    - plant_slot_id
+    - plant_type_id
+    - name
+    type: object
+
+  route.UpdatePlantStatusRequest:
+    properties:
+      status:
+        type: string
+        enum: [seedling, vegetative, flowering, harvested, dead]
+        example: "flowering"
+      reason:
+        type: string
+        example: "Plant has developed first flowers"
+    required:
+    - status
+    type: object
+
+  route.RecordCareRequest:
+    properties:
+      care_type:
+        type: string
+        enum: [watering, fertilizing, pruning, inspection, pest_control]
+        example: "watering"
+      notes:
+        type: string
+        example: "Regular watering with nutrients"
+      measurements:
+        $ref: '#/definitions/route.CareMeasurements'
+      products:
+        type: array
+        items:
+          type: string
+        example: ["nutrient_solution_a", "ph_adjuster"]
+    required:
+    - care_type
+    type: object
+
+  route.CareMeasurements:
+    properties:
+      temperature:
+        type: number
+        format: float
+        minimum: -10
+        maximum: 50
+        example: 24.5
+      humidity:
+        type: number
+        format: float
+        minimum: 0
+        maximum: 100
+        example: 65.0
+      soil_ph:
+        type: number
+        format: float
+        minimum: 0
+        maximum: 14
+        example: 6.5
+      water_amount:
+        type: number
+        format: float
+        minimum: 0
+        maximum: 10000
+        example: 500.0
+    type: object
+
+  route.UploadPlantImageRequest:
+    properties:
+      image_url:
+        type: string
+        example: "https://storage.example.com/plant_images/plant_id/image.jpg"
+      description:
+        type: string
+        example: "Week 8 flowering stage"
+    required:
+    - image_url
+    type: object
+
+  route.HarvestPlantRequest:
+    properties:
+      weight:
+        type: number
+        format: float
+        minimum: 0.1
+        example: 45.5
+      quality:
+        type: integer
+        minimum: 1
+        maximum: 10
+        example: 8
+      notes:
+        type: string
+        example: "Excellent quality harvest"
+      processing_type:
+        type: string
+        enum: [self_process, sell_to_seedeg]
+        example: "self_process"
+    required:
+    - weight
+    - quality
+    - processing_type
+    type: object
+
+  route.ForceStatusUpdateRequest:
+    properties:
+      status:
+        type: string
+        enum: [seedling, vegetative, flowering, harvested, dead]
+        example: "dead"
+      reason:
+        type: string
+        example: "Plant contamination - emergency removal"
+      admin_override:
+        type: boolean
+        example: true
+    required:
+    - status
+    - reason
+    - admin_override
+    type: object
+
+  db.PlantAnalytics:
+    properties:
+      status_distribution:
+        type: object
+        additionalProperties:
+          type: integer
+        example:
+          seedling: 15
+          vegetative: 25
+          flowering: 30
+          harvested: 20
+          dead: 5
+      health_distribution:
+        type: object
+        additionalProperties:
+          type: integer
+        example:
+          "1-3": 5
+          "4-6": 15
+          "7-8": 45
+          "9-10": 30
+      strain_popularity:
+        type: array
+        items:
+          type: object
+          properties:
+            strain:
+              type: string
+            count:
+              type: integer
+            avg_health:
+              type: number
+              format: float
+      growth_metrics:
+        type: object
+        properties:
+          avg_cycle_length:
+            type: integer
+          success_rate:
+            type: number
+            format: float
+          avg_yield:
+            type: number
+            format: float
+      upcoming_harvests:
+        type: array
+        items:
+          type: object
+          properties:
+            plant_id:
+              type: string
+            name:
+              type: string
+            expected_date:
+              type: string
+              format: date-time
+            days_remaining:
+              type: integer
+    type: object
+
+  db.PlantHealthAlert:
+    properties:
+      plant_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4617"
+      member_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4618"
+      alert_type:
+        type: string
+        enum: [critical_health, overdue_care, harvest_ready]
+        example: "critical_health"
+      severity:
+        type: string
+        enum: [low, medium, high, critical]
+        example: "high"
+      message:
+        type: string
+        example: "Plant health critically low (3/10)"
+      created_at:
+        type: string
+        format: date-time
+        example: "2024-03-15T10:30:00Z"
+      days_overdue:
+        type: integer
+        example: 10
+      health_rating:
+        type: integer
+        minimum: 1
+        maximum: 10
+        example: 3
+    type: object
+
+  db.PlantHarvestReadyDto:
+    properties:
+      plant_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4617"
+      name:
+        type: string
+        example: "Purple Haze #1"
+      member_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4618"
+      strain:
+        type: string
+        example: "Purple Haze"
+      status:
+        type: string
+        example: "flowering"
+      expected_harvest:
+        type: string
+        format: date-time
+        example: "2024-04-01T10:00:00Z"
+      days_remaining:
+        type: integer
+        example: 2
+      health:
+        type: integer
+        minimum: 1
+        maximum: 10
+        example: 9
+    type: object
+
+  db.CareRecordBaseDto:
+    properties:
+      id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4622"
+      plant_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4617"
+      member_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4618"
+      care_type:
+        type: string
+        enum: [watering, fertilizing, pruning, inspection, pest_control]
+        example: "watering"
+      care_date:
+        type: string
+        format: date-time
+        example: "2024-03-15T10:30:00Z"
+      notes:
+        type: string
+        example: "Regular watering with nutrients"
+    type: object
+
+  db.HarvestDto:
+    properties:
+      id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4623"
+      plant_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4617"
+      weight:
+        type: number
+        format: float
+        example: 45.5
+      quality:
+        type: integer
+        minimum: 1
+        maximum: 10
+        example: 8
+      harvest_date:
+        type: string
+        format: date-time
+        example: "2024-04-01T10:00:00Z"
+      processing_type:
+        type: string
+        enum: [self_process, sell_to_seedeg]
+        example: "self_process"
+    type: object
+
   # Plant Slot Management Definitions
   db.PlantSlotBaseDto:
     properties:

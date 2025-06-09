@@ -68,17 +68,19 @@ This document describes the comprehensive architecture of the cannabis cultivati
 - **Integration**: User/Member domains, KYC verification, payment readiness
 - **Status**: Production Ready (Comprehensive implementation)
 
-### 🔄 Planned Components
-
-#### 4. Plant Slot Management (Next)
+#### 4. Plant Slot Management System ✅ COMPLETE
 - **Route**: `/plant-slots/v1/*` 
-- **Components**: Slot allocation, availability tracking, transfer handling
-- **Dependencies**: Membership system (✅ Complete)
+- **Components**: Slot allocation, availability tracking, transfer handling, maintenance logging
+- **Integration**: Membership system, automated allocation, capacity management
+- **Status**: Production Ready (Full implementation with analytics)
 
-#### 5. Plant Management
+#### 5. Plant Management System ✅ COMPLETE
 - **Route**: `/plants/v1/*`
-- **Components**: Lifecycle tracking, care records, health monitoring
-- **Dependencies**: Plant slot system
+- **Components**: Complete lifecycle tracking, care records, health monitoring, harvest management
+- **Integration**: Plant slot system, PlantType catalog, image storage, analytics
+- **Status**: Production Ready (12 endpoints, full TDD implementation)
+
+### 🔄 Planned Components
 
 #### 6. Payment Integration
 - **Route**: `/payments/v1/*`
@@ -141,7 +143,7 @@ type MemberDomain struct {
 }
 ```
 
-#### 4. Membership Management ✅ NEW INTEGRATION
+#### 4. Membership Management ✅ COMPLETE
 ```go
 type MembershipDomain struct {
     BaseDomain      `bson:",inline"`
@@ -155,6 +157,46 @@ type MembershipDomain struct {
     PaymentAmount   *float64     `json:"payment_amount" bson:"payment_amount"`
     PaymentStatus   *string      `json:"payment_status" bson:"payment_status"`
     AutoRenew       *bool        `json:"auto_renew" bson:"auto_renew"`
+    TenantId        *enum.Tenant `json:"tenant_id" bson:"tenant_id"`
+}
+```
+
+#### 5. Plant Slot Management ✅ COMPLETE
+```go
+type PlantSlotDomain struct {
+    BaseDomain      `bson:",inline"`
+    SlotNumber      *int         `json:"slot_number" bson:"slot_number"`
+    MemberID        *string      `json:"member_id" bson:"member_id"`
+    MembershipID    *string      `json:"membership_id" bson:"membership_id"`
+    Status          *string      `json:"status" bson:"status"`
+    Location        *string      `json:"location" bson:"location"`
+    Position        *Position    `json:"position" bson:"position"`
+    Notes           *string      `json:"notes" bson:"notes"`
+    MaintenanceLog  *[]MaintenanceEntry `json:"maintenance_log" bson:"maintenance_log"`
+    LastCleanDate   *time.Time   `json:"last_clean_date" bson:"last_clean_date"`
+    TenantId        *enum.Tenant `json:"tenant_id" bson:"tenant_id"`
+}
+```
+
+#### 6. Plant Management ✅ COMPLETE  
+```go
+type PlantDomain struct {
+    BaseDomain      `bson:",inline"`
+    PlantTypeID     *string      `json:"plant_type_id" bson:"plant_type_id"`
+    PlantSlotID     *string      `json:"plant_slot_id" bson:"plant_slot_id"`
+    MemberID        *string      `json:"member_id" bson:"member_id"`
+    Status          *string      `json:"status" bson:"status"`
+    PlantedDate     *time.Time   `json:"planted_date" bson:"planted_date"`
+    ExpectedHarvest *time.Time   `json:"expected_harvest" bson:"expected_harvest"`
+    ActualHarvest   *time.Time   `json:"actual_harvest" bson:"actual_harvest"`
+    Name            *string      `json:"name" bson:"name"`
+    Health          *int         `json:"health" bson:"health"`
+    Strain          *string      `json:"strain" bson:"strain"`
+    Height          *float64     `json:"height" bson:"height"`
+    Images          *[]string    `json:"images" bson:"images"`
+    Notes           *string      `json:"notes" bson:"notes"`
+    HarvestID       *string      `json:"harvest_id" bson:"harvest_id"`
+    NFTTokenID      *string      `json:"nft_token_id" bson:"nft_token_id"`
     TenantId        *enum.Tenant `json:"tenant_id" bson:"tenant_id"`
 }
 ```
@@ -175,17 +217,44 @@ type MembershipDomain struct {
 │   ├── status        # Verification status
 │   ├── submit        # Submit for verification
 │   └── admin/        # Admin verification tools
-└── membership/v1/    # ✅ NEW: Membership management
-    ├── purchase      # Purchase new membership
-    ├── status        # Current membership status
-    ├── renew         # Renew/upgrade membership
-    ├── history       # Membership history
-    ├── {id}          # Cancel specific membership
-    └── admin/        # Admin management tools
-        ├── pending   # Pending memberships
-        ├── expiring  # Expiring memberships
-        ├── analytics # Membership analytics
-        └── {id}/status # Admin status updates
+├── membership/v1/    # ✅ Membership management
+│   ├── purchase      # Purchase new membership
+│   ├── status        # Current membership status
+│   ├── renew         # Renew/upgrade membership
+│   ├── history       # Membership history
+│   ├── {id}          # Cancel specific membership
+│   └── admin/        # Admin management tools
+│       ├── pending   # Pending memberships
+│       ├── expiring  # Expiring memberships
+│       ├── analytics # Membership analytics
+│       └── {id}/status # Admin status updates
+├── plant-slots/v1/   # ✅ Plant slot management
+│   ├── my-slots      # Member's allocated slots
+│   ├── request       # Request new slots
+│   ├── {id}          # Slot details
+│   ├── {id}/status   # Update slot status
+│   ├── {id}/maintenance # Report maintenance
+│   ├── transfer      # Transfer slots
+│   └── admin/        # Admin slot management
+│       ├── all       # All slots overview
+│       ├── assign    # Assign slots to members
+│       ├── maintenance # Maintenance tracking
+│       ├── analytics # Slot utilization analytics
+│       └── {id}/force-status # Force status change
+└── plants/v1/        # ✅ Plant lifecycle management
+    ├── my-plants     # Member's plants
+    ├── create        # Create new plant
+    ├── {id}          # Plant details
+    ├── {id}/status   # Update plant status
+    ├── {id}/care     # Record care activities
+    ├── {id}/images   # Upload plant images
+    ├── {id}/harvest  # Harvest plant
+    └── admin/        # Admin plant management
+        ├── all       # All plants overview
+        ├── analytics # Plant analytics
+        ├── health-alerts # Health monitoring
+        ├── harvest-ready # Harvest scheduling
+        └── {id}/force-status # Force status change
 ```
 
 ### Middleware Stack
