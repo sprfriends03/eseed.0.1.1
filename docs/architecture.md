@@ -80,9 +80,15 @@ This document describes the comprehensive architecture of the cannabis cultivati
 - **Integration**: Plant slot system, PlantType catalog, image storage, analytics
 - **Status**: Production Ready (12 endpoints, full TDD implementation)
 
+#### 6. Harvest Management System ✅ COMPLETE
+- **Route**: `/harvest/v1/*`
+- **Components**: 7-stage processing workflow, quality control, collection management, analytics
+- **Integration**: Plant system, member workflow, admin verification, NFT preparation
+- **Status**: Production Ready (10 endpoints, 100% test coverage, TDD implementation)
+
 ### 🔄 Planned Components
 
-#### 6. Payment Integration
+#### 7. Payment Integration
 - **Route**: `/payments/v1/*`
 - **Components**: Stripe/PayPal integration, transaction handling
 - **Integration Points**: Ready in membership system
@@ -201,6 +207,52 @@ type PlantDomain struct {
 }
 ```
 
+#### 7. Harvest Management ✅ NEW
+```go
+type HarvestDomain struct {
+    BaseDomain             `bson:",inline"`
+    PlantID                *string                `json:"plant_id" bson:"plant_id"`
+    MemberID               *string                `json:"member_id" bson:"member_id"`
+    HarvestDate            time.Time              `json:"harvest_date" bson:"harvest_date"`
+    Weight                 *float64               `json:"weight" bson:"weight"`
+    Quality                *int                   `json:"quality" bson:"quality"`
+    Images                 *[]string              `json:"images" bson:"images"`
+    Strain                 *string                `json:"strain" bson:"strain"`
+    Status                 *string                `json:"status" bson:"status"`
+    NFTTokenID             *string                `json:"nft_token_id" bson:"nft_token_id"`
+    NFTContractAddress     *string                `json:"nft_contract_address" bson:"nft_contract_address"`
+    Notes                  *string                `json:"notes" bson:"notes"`
+    CollectionDate         *time.Time             `json:"collection_date" bson:"collection_date"`
+    
+    // Enhanced Processing Workflow Fields
+    ProcessingStage        *string                `json:"processing_stage" bson:"processing_stage"`
+    ProcessingStarted      *time.Time             `json:"processing_started" bson:"processing_started"`
+    DryingCompleted        *time.Time             `json:"drying_completed" bson:"drying_completed"`
+    CuringCompleted        *time.Time             `json:"curing_completed" bson:"curing_completed"`
+    QualityChecks          *[]QualityCheckData    `json:"quality_checks" bson:"quality_checks"`
+    ProcessingNotes        *string                `json:"processing_notes" bson:"processing_notes"`
+    EstimatedReady         *time.Time             `json:"estimated_ready" bson:"estimated_ready"`
+    
+    // Collection Management
+    CollectionMethod       *string                `json:"collection_method" bson:"collection_method"`
+    PreferredCollectionDate *time.Time            `json:"preferred_collection_date" bson:"preferred_collection_date"`
+    DeliveryAddress        *string                `json:"delivery_address" bson:"delivery_address"`
+    CollectionScheduled    *time.Time             `json:"collection_scheduled" bson:"collection_scheduled"`
+    
+    TenantId               *enum.Tenant           `json:"tenant_id" bson:"tenant_id"`
+}
+
+type QualityCheckData struct {
+    CheckedBy       string     `json:"checked_by" bson:"checked_by"`
+    CheckedAt       time.Time  `json:"checked_at" bson:"checked_at"`
+    VisualQuality   int        `json:"visual_quality" bson:"visual_quality"`
+    MoistureContent *float64   `json:"moisture_content" bson:"moisture_content"`
+    Density         *float64   `json:"density" bson:"density"`
+    Approved        bool       `json:"approved" bson:"approved"`
+    Notes           *string    `json:"notes" bson:"notes"`
+}
+```
+
 ## API Architecture & Route System
 
 ### Route Organization
@@ -241,19 +293,31 @@ type PlantDomain struct {
 │       ├── maintenance # Maintenance tracking
 │       ├── analytics # Slot utilization analytics
 │       └── {id}/force-status # Force status change
-└── plants/v1/        # ✅ Plant lifecycle management
-    ├── my-plants     # Member's plants
-    ├── create        # Create new plant
-    ├── {id}          # Plant details
-    ├── {id}/status   # Update plant status
-    ├── {id}/care     # Record care activities
-    ├── {id}/images   # Upload plant images
-    ├── {id}/harvest  # Harvest plant
-    └── admin/        # Admin plant management
-        ├── all       # All plants overview
-        ├── analytics # Plant analytics
-        ├── health-alerts # Health monitoring
-        ├── harvest-ready # Harvest scheduling
+├── plants/v1/        # ✅ Plant lifecycle management
+│   ├── my-plants     # Member's plants
+│   ├── create        # Create new plant
+│   ├── {id}          # Plant details
+│   ├── {id}/status   # Update plant status
+│   ├── {id}/care     # Record care activities
+│   ├── {id}/images   # Upload plant images
+│   ├── {id}/harvest  # Harvest plant
+│   └── admin/        # Admin plant management
+│       ├── all       # All plants overview
+│       ├── analytics # Plant analytics
+│       ├── health-alerts # Health monitoring
+│       ├── harvest-ready # Harvest scheduling
+│       └── {id}/force-status # Force status change
+└── harvest/v1/       # ✅ Harvest management system
+    ├── my-harvests   # Member's harvests
+    ├── {id}          # Harvest details
+    ├── {id}/status   # Update processing status
+    ├── {id}/images   # Upload harvest images
+    ├── {id}/collect  # Schedule/complete collection
+    └── admin/        # Admin harvest management
+        ├── all       # All harvests overview
+        ├── processing # Processing workflow management
+        ├── analytics # Harvest analytics
+        ├── {id}/quality-check # Quality verification
         └── {id}/force-status # Force status change
 ```
 
@@ -306,6 +370,28 @@ PermissionMembershipUpdate   // Update membership details
 PermissionMembershipDelete   // Cancel membership
 PermissionMembershipRenew    // Renew/upgrade membership
 PermissionMembershipManage   // Admin management functions
+
+// ✅ NEW: Plant Slot Permissions
+PermissionPlantSlotView      // View assigned slots
+PermissionPlantSlotRequest   // Request new slots
+PermissionPlantSlotUpdate    // Update slot status/maintenance
+PermissionPlantSlotTransfer  // Transfer slots between members
+PermissionPlantSlotManage    // Admin slot management
+
+// ✅ NEW: Plant Permissions
+PermissionPlantView          // View plants
+PermissionPlantCreate        // Create new plants
+PermissionPlantUpdate        // Update plant status
+PermissionPlantDelete        // Delete plants
+PermissionPlantManage        // Admin plant management
+PermissionPlantCare          // Record care activities
+PermissionPlantHarvest       // Harvest management
+
+// ✅ NEW: Harvest Permissions
+PermissionHarvestView        // View own harvests
+PermissionHarvestUpdate      // Update harvest status/images
+PermissionHarvestCollect     // Collect ready harvests
+PermissionHarvestManage      // Admin harvest management
 ```
 
 ### Role-Based Access Control
@@ -356,6 +442,38 @@ KYC Upload → Verification → Approval → Membership Eligibility ✅ NEW
      ▼            ▼           ▼              ▼
   MinIO       Database    Admin Review   Membership Purchase
   Storage     Tracking    Interface      Available
+```
+
+### Harvest Processing Workflow ✅ NEW
+
+```
+Plant Harvest → Initial Processing → Drying → Curing → Quality Check → Ready → Collection
+      │               │              │        │           │          │         │
+      ▼               ▼              ▼        ▼           ▼          ▼         ▼
+  Create Harvest   Processing     Drying    Curing    Quality    Ready for   Final
+  Record in DB     Started       Complete  Complete  Approval   Collection  Transfer
+                   Timestamp     Timestamp Timestamp Verification  Notification to NFT
+```
+
+### Plant-to-Harvest Integration Flow ✅ NEW
+
+```
+Plant Status: "harvest_ready"
+        │
+        ▼
+POST /plants/v1/{id}/harvest
+        │
+        ▼
+Create HarvestDomain
+        │
+        ▼
+Update Plant.HarvestID
+        │
+        ▼
+Release PlantSlot (status: "available")
+        │
+        ▼
+Begin 7-Stage Processing Workflow
 ```
 
 ### Database Operations Flow

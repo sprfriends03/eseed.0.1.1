@@ -2568,6 +2568,521 @@ paths:
         "403":
           description: Forbidden - Admin permissions required
 
+  # Harvest Management API Endpoints
+  /harvest/v1/my-harvests:
+    get:
+      summary: Get My Harvests
+      tags:
+      - Harvest
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        type: string
+        enum: [harvested, processing, ready, collected]
+        description: Filter by harvest status
+      - name: strain
+        in: query
+        type: string
+        description: Filter by strain name (partial match)
+      - name: processing_stage
+        in: query
+        type: string
+        enum: [harvested, initial_processing, drying, curing, quality_check, ready, collected]
+        description: Filter by processing stage
+      - name: date_from
+        in: query
+        type: string
+        format: date
+        description: Filter from date (YYYY-MM-DD)
+      - name: date_to
+        in: query
+        type: string
+        format: date
+        description: Filter to date (YYYY-MM-DD)
+      - name: page
+        in: query
+        type: integer
+        minimum: 1
+        default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+        description: Items per page
+      responses:
+        "200":
+          description: Harvests retrieved successfully
+          schema:
+            type: object
+            properties:
+              harvests:
+                type: array
+                items:
+                  $ref: '#/definitions/db.HarvestBaseDto'
+              total:
+                type: integer
+              page:
+                type: integer
+              limit:
+                type: integer
+              has_next:
+                type: boolean
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "400":
+          description: Bad Request - Invalid query parameters
+
+  /harvest/v1/{id}:
+    get:
+      summary: Get Harvest Details
+      tags:
+      - Harvest
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Harvest ID
+      responses:
+        "200":
+          description: Harvest details retrieved successfully
+          schema:
+            type: object
+            properties:
+              harvest:
+                $ref: '#/definitions/db.HarvestDetailDto'
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Cannot access another member's harvest
+        "404":
+          description: Harvest not found
+
+  /harvest/v1/{id}/status:
+    put:
+      summary: Update Harvest Status
+      tags:
+      - Harvest
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Harvest ID
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/route.UpdateHarvestStatusRequest'
+      responses:
+        "200":
+          description: Harvest status updated successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              harvest:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                  processing_stage:
+                    type: string
+                  updated_at:
+                    type: string
+                    format: date-time
+        "400":
+          description: Bad Request - Invalid request data
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Cannot update another member's harvest
+        "404":
+          description: Harvest not found
+        "409":
+          description: Conflict - Invalid status or stage transition
+
+  /harvest/v1/{id}/images:
+    post:
+      summary: Upload Harvest Image
+      tags:
+      - Harvest
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Harvest ID
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/route.UploadHarvestImageRequest'
+      responses:
+        "200":
+          description: Harvest image uploaded successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              image:
+                type: object
+                properties:
+                  url:
+                    type: string
+                  description:
+                    type: string
+                  stage:
+                    type: string
+                  uploaded_at:
+                    type: string
+                    format: date-time
+        "400":
+          description: Bad Request - Invalid image data
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Cannot update another member's harvest
+        "404":
+          description: Harvest not found
+
+  /harvest/v1/{id}/collect:
+    post:
+      summary: Collect Harvest
+      tags:
+      - Harvest
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Harvest ID
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/route.CollectHarvestRequest'
+      responses:
+        "200":
+          description: Harvest collection scheduled successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              collection:
+                type: object
+                properties:
+                  method:
+                    type: string
+                  scheduled_date:
+                    type: string
+                    format: date-time
+                  delivery_address:
+                    type: string
+                  status:
+                    type: string
+                  tracking_id:
+                    type: string
+        "400":
+          description: Bad Request - Invalid collection data
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Cannot collect another member's harvest
+        "404":
+          description: Harvest not found
+        "409":
+          description: Conflict - Harvest not ready for collection
+
+  /harvest/v1/admin/all:
+    get:
+      summary: Get All Harvests (Admin)
+      tags:
+      - Harvest Admin
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: member_id
+        in: query
+        type: string
+        description: Filter by specific member
+      - name: status
+        in: query
+        type: string
+        enum: [harvested, processing, ready, collected]
+        description: Filter by harvest status
+      - name: processing_stage
+        in: query
+        type: string
+        enum: [harvested, initial_processing, drying, curing, quality_check, ready, collected]
+        description: Filter by processing stage
+      - name: quality_min
+        in: query
+        type: integer
+        minimum: 1
+        maximum: 10
+        description: Minimum quality rating filter
+      - name: quality_max
+        in: query
+        type: integer
+        minimum: 1
+        maximum: 10
+        description: Maximum quality rating filter
+      - name: date_from
+        in: query
+        type: string
+        format: date
+        description: Filter from date (YYYY-MM-DD)
+      - name: date_to
+        in: query
+        type: string
+        format: date
+        description: Filter to date (YYYY-MM-DD)
+      - name: page
+        in: query
+        type: integer
+        minimum: 1
+        default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+        description: Items per page
+      - name: sort_by
+        in: query
+        type: string
+        enum: [harvest_date, quality, weight]
+        description: Sort field
+      - name: sort_order
+        in: query
+        type: string
+        enum: [asc, desc]
+        description: Sort direction
+      responses:
+        "200":
+          description: All harvests retrieved successfully
+          schema:
+            type: object
+            properties:
+              harvests:
+                type: array
+                items:
+                  $ref: '#/definitions/db.HarvestAdminDto'
+              total:
+                type: integer
+              page:
+                type: integer
+              limit:
+                type: integer
+              has_next:
+                type: boolean
+              summary:
+                $ref: '#/definitions/db.HarvestSummaryDto'
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Admin permissions required
+
+  /harvest/v1/admin/processing:
+    get:
+      summary: Get Processing Harvests (Admin)
+      tags:
+      - Harvest Admin
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: stage
+        in: query
+        type: string
+        enum: [initial_processing, drying, curing, quality_check]
+        description: Filter by processing stage
+      - name: overdue
+        in: query
+        type: boolean
+        description: Show overdue items only
+      - name: days_in_stage
+        in: query
+        type: integer
+        minimum: 1
+        description: Filter by days in current stage
+      responses:
+        "200":
+          description: Processing harvests retrieved successfully
+          schema:
+            type: object
+            properties:
+              processing_harvests:
+                type: array
+                items:
+                  $ref: '#/definitions/db.ProcessingHarvestDto'
+              stage_summary:
+                type: object
+                additionalProperties:
+                  type: integer
+              overdue_count:
+                type: integer
+              ready_for_quality_check:
+                type: integer
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Admin permissions required
+
+  /harvest/v1/admin/analytics:
+    get:
+      summary: Get Harvest Analytics (Admin)
+      tags:
+      - Harvest Admin
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: time_range
+        in: query
+        type: string
+        enum: [week, month, quarter, year]
+        default: month
+        description: Analytics time range
+      - name: member_id
+        in: query
+        type: string
+        description: Analytics for specific member
+      - name: strain
+        in: query
+        type: string
+        description: Analytics for specific strain
+      responses:
+        "200":
+          description: Harvest analytics retrieved successfully
+          schema:
+            type: object
+            properties:
+              analytics:
+                $ref: '#/definitions/db.HarvestAnalyticsDto'
+              time_range:
+                type: string
+              generated_at:
+                type: string
+                format: date-time
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Admin permissions required
+
+  /harvest/v1/admin/{id}/quality-check:
+    post:
+      summary: Quality Check (Admin)
+      tags:
+      - Harvest Admin
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Harvest ID
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/route.QualityCheckRequest'
+      responses:
+        "200":
+          description: Quality check recorded successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              quality_check:
+                $ref: '#/definitions/db.QualityCheckDto'
+              next_stage:
+                type: string
+        "400":
+          description: Bad Request - Invalid quality check data
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Admin permissions required
+        "404":
+          description: Harvest not found
+        "409":
+          description: Conflict - Harvest not in quality_check stage
+
+  /harvest/v1/admin/{id}/force-status:
+    put:
+      summary: Force Status Update (Admin)
+      tags:
+      - Harvest Admin
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Harvest ID
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/route.ForceStatusUpdateRequest'
+      responses:
+        "200":
+          description: Harvest status force updated successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              harvest:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                  processing_stage:
+                    type: string
+                  force_updated_by:
+                    type: string
+                  force_updated_at:
+                    type: string
+                    format: date-time
+                  force_reason:
+                    type: string
+              warning:
+                type: string
+        "400":
+          description: Bad Request - Invalid status or missing force reason
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Admin permissions required
+        "404":
+          description: Harvest not found
+
 definitions:
   # Plant Management Definitions
   db.PlantBaseDto:
@@ -2953,7 +3468,8 @@ definitions:
         example: "Regular watering with nutrients"
     type: object
 
-  db.HarvestDto:
+  # Enhanced Harvest Management Definitions
+  db.HarvestBaseDto:
     properties:
       id:
         type: string
@@ -2961,6 +3477,13 @@ definitions:
       plant_id:
         type: string
         example: "654db9eca1f1b1bdbf3d4617"
+      member_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4618"
+      harvest_date:
+        type: string
+        format: date-time
+        example: "2024-06-10T10:30:00Z"
       weight:
         type: number
         format: float
@@ -2970,14 +3493,477 @@ definitions:
         minimum: 1
         maximum: 10
         example: 8
+      strain:
+        type: string
+        example: "Purple Haze"
+      status:
+        type: string
+        enum: [harvested, processing, ready, collected]
+        example: "processing"
+      processing_stage:
+        type: string
+        enum: [harvested, initial_processing, drying, curing, quality_check, ready, collected]
+        example: "drying"
+      estimated_ready:
+        type: string
+        format: date-time
+        example: "2024-06-20T10:30:00Z"
+      images:
+        type: array
+        items:
+          type: string
+        example: ["https://storage.example.com/harvest_images/harvest1.jpg"]
+      notes:
+        type: string
+        example: "High quality harvest"
+      created_at:
+        type: string
+        format: date-time
+        example: "2024-06-10T10:30:00Z"
+      updated_at:
+        type: string
+        format: date-time
+        example: "2024-06-15T14:20:00Z"
+    type: object
+
+  db.HarvestDetailDto:
+    properties:
+      id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4623"
+      plant_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4617"
+      member_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4618"
       harvest_date:
         type: string
         format: date-time
-        example: "2024-04-01T10:00:00Z"
-      processing_type:
+        example: "2024-06-10T10:30:00Z"
+      weight:
+        type: number
+        format: float
+        example: 45.5
+      quality:
+        type: integer
+        minimum: 1
+        maximum: 10
+        example: 8
+      strain:
         type: string
-        enum: [self_process, sell_to_seedeg]
-        example: "self_process"
+        example: "Purple Haze"
+      status:
+        type: string
+        enum: [harvested, processing, ready, collected]
+        example: "processing"
+      processing_stage:
+        type: string
+        enum: [harvested, initial_processing, drying, curing, quality_check, ready, collected]
+        example: "drying"
+      processing_started:
+        type: string
+        format: date-time
+        example: "2024-06-10T11:00:00Z"
+      drying_completed:
+        type: string
+        format: date-time
+        example: null
+      curing_completed:
+        type: string
+        format: date-time
+        example: null
+      estimated_ready:
+        type: string
+        format: date-time
+        example: "2024-06-20T10:30:00Z"
+      processing_notes:
+        type: string
+        example: "Standard processing protocol"
+      quality_checks:
+        type: array
+        items:
+          $ref: '#/definitions/db.QualityCheckDto'
+      collection_method:
+        type: string
+        enum: [pickup, scheduled_delivery]
+        example: null
+      preferred_collection_date:
+        type: string
+        format: date-time
+        example: null
+      delivery_address:
+        type: string
+        example: null
+      collection_scheduled:
+        type: string
+        format: date-time
+        example: null
+      images:
+        type: array
+        items:
+          type: string
+        example: ["https://storage.example.com/harvest_images/harvest1.jpg"]
+      notes:
+        type: string
+        example: "High quality harvest from slot 15"
+      nft_token_id:
+        type: string
+        example: null
+      nft_contract_address:
+        type: string
+        example: null
+      created_at:
+        type: string
+        format: date-time
+        example: "2024-06-10T10:30:00Z"
+      updated_at:
+        type: string
+        format: date-time
+        example: "2024-06-15T14:20:00Z"
+    type: object
+
+  db.HarvestAdminDto:
+    properties:
+      id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4623"
+      plant_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4617"
+      member_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4618"
+      member_name:
+        type: string
+        example: "John Doe"
+      harvest_date:
+        type: string
+        format: date-time
+        example: "2024-06-10T10:30:00Z"
+      weight:
+        type: number
+        format: float
+        example: 45.5
+      quality:
+        type: integer
+        minimum: 1
+        maximum: 10
+        example: 8
+      strain:
+        type: string
+        example: "Purple Haze"
+      status:
+        type: string
+        enum: [harvested, processing, ready, collected]
+        example: "processing"
+      processing_stage:
+        type: string
+        enum: [harvested, initial_processing, drying, curing, quality_check, ready, collected]
+        example: "drying"
+      processing_days:
+        type: integer
+        example: 5
+      estimated_ready:
+        type: string
+        format: date-time
+        example: "2024-06-20T10:30:00Z"
+      quality_approved:
+        type: boolean
+        example: true
+      collection_scheduled:
+        type: boolean
+        example: false
+      created_at:
+        type: string
+        format: date-time
+        example: "2024-06-10T10:30:00Z"
+      updated_at:
+        type: string
+        format: date-time
+        example: "2024-06-15T14:20:00Z"
+    type: object
+
+  db.ProcessingHarvestDto:
+    properties:
+      id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4623"
+      member_name:
+        type: string
+        example: "John Doe"
+      strain:
+        type: string
+        example: "Purple Haze"
+      weight:
+        type: number
+        format: float
+        example: 45.5
+      processing_stage:
+        type: string
+        enum: [initial_processing, drying, curing, quality_check]
+        example: "drying"
+      days_in_stage:
+        type: integer
+        example: 5
+      processing_started:
+        type: string
+        format: date-time
+        example: "2024-06-10T11:00:00Z"
+      stage_started:
+        type: string
+        format: date-time
+        example: "2024-06-12T09:00:00Z"
+      estimated_completion:
+        type: string
+        format: date-time
+        example: "2024-06-18T09:00:00Z"
+      is_overdue:
+        type: boolean
+        example: false
+      next_action:
+        type: string
+        example: "Check moisture levels"
+      quality_checked:
+        type: boolean
+        example: false
+    type: object
+
+  db.QualityCheckDto:
+    properties:
+      checked_by:
+        type: string
+        example: "admin_user_id"
+      checked_at:
+        type: string
+        format: date-time
+        example: "2024-06-12T09:00:00Z"
+      visual_quality:
+        type: integer
+        minimum: 1
+        maximum: 10
+        example: 8
+      moisture_content:
+        type: number
+        format: float
+        example: 12.5
+      density:
+        type: number
+        format: float
+        example: 0.85
+      approved:
+        type: boolean
+        example: true
+      notes:
+        type: string
+        example: "Excellent quality, meets all standards"
+    type: object
+
+  db.HarvestSummaryDto:
+    properties:
+      total_weight:
+        type: number
+        format: float
+        example: 2875.5
+      average_quality:
+        type: number
+        format: float
+        example: 7.8
+      status_breakdown:
+        type: object
+        additionalProperties:
+          type: integer
+        example:
+          processing: 45
+          ready: 12
+          collected: 93
+      stage_breakdown:
+        type: object
+        additionalProperties:
+          type: integer
+        example:
+          drying: 20
+          curing: 15
+          quality_check: 10
+    type: object
+
+  db.HarvestAnalyticsDto:
+    properties:
+      yield_analytics:
+        type: object
+        properties:
+          total_harvests:
+            type: integer
+            example: 45
+          total_weight:
+            type: number
+            format: float
+            example: 1875.5
+          average_weight:
+            type: number
+            format: float
+            example: 41.7
+          weight_trend:
+            type: string
+            example: "+12.5%"
+          best_performing_strain:
+            type: string
+            example: "Purple Haze"
+      quality_analytics:
+        type: object
+        properties:
+          average_quality:
+            type: number
+            format: float
+            example: 7.8
+          quality_trend:
+            type: string
+            example: "+0.5"
+          quality_distribution:
+            type: object
+            additionalProperties:
+              type: integer
+            example:
+              "1-3": 2
+              "4-6": 8
+              "7-8": 25
+              "9-10": 10
+      processing_analytics:
+        type: object
+        properties:
+          average_processing_time:
+            type: number
+            format: float
+            example: 14.5
+          processing_efficiency:
+            type: number
+            format: float
+            example: 92.5
+          quality_check_approval_rate:
+            type: number
+            format: float
+            example: 95.5
+      collection_analytics:
+        type: object
+        properties:
+          total_collected:
+            type: integer
+            example: 38
+          collection_methods:
+            type: object
+            properties:
+              pickup:
+                type: integer
+                example: 28
+              scheduled_delivery:
+                type: integer
+                example: 10
+          average_collection_time:
+            type: number
+            format: float
+            example: 2.3
+          pending_collections:
+            type: integer
+            example: 7
+    type: object
+
+  # Harvest Request Definitions
+  route.UpdateHarvestStatusRequest:
+    properties:
+      status:
+        type: string
+        enum: [processing]
+        example: "processing"
+      processing_stage:
+        type: string
+        enum: [initial_processing, drying, curing]
+        example: "curing"
+      notes:
+        type: string
+        example: "Moving to curing stage ahead of schedule"
+    type: object
+
+  route.UploadHarvestImageRequest:
+    properties:
+      image_url:
+        type: string
+        example: "https://storage.example.com/harvest_images/new_image.jpg"
+      description:
+        type: string
+        example: "Final harvest photo showing quality"
+      stage:
+        type: string
+        enum: [harvested, initial_processing, drying, curing, quality_check, ready]
+        example: "drying"
+    required:
+    - image_url
+    type: object
+
+  route.CollectHarvestRequest:
+    properties:
+      collection_method:
+        type: string
+        enum: [pickup, scheduled_delivery]
+        example: "scheduled_delivery"
+      delivery_address:
+        type: string
+        example: "123 Main Street, City, State 12345"
+      preferred_date:
+        type: string
+        format: date-time
+        example: "2024-06-25T14:00:00Z"
+      special_notes:
+        type: string
+        example: "Weekday delivery preferred"
+    required:
+    - collection_method
+    type: object
+
+  route.QualityCheckRequest:
+    properties:
+      visual_quality:
+        type: integer
+        minimum: 1
+        maximum: 10
+        example: 8
+      moisture_content:
+        type: number
+        format: float
+        example: 12.5
+      density:
+        type: number
+        format: float
+        example: 0.85
+      approved:
+        type: boolean
+        example: true
+      notes:
+        type: string
+        example: "Excellent quality, meets all standards"
+    required:
+    - visual_quality
+    - approved
+    type: object
+
+  route.ForceStatusUpdateRequest:
+    properties:
+      status:
+        type: string
+        enum: [harvested, processing, ready, collected]
+        example: "ready"
+      processing_stage:
+        type: string
+        enum: [harvested, initial_processing, drying, curing, quality_check, ready, collected]
+        example: "ready"
+      force_reason:
+        type: string
+        example: "Emergency quality approval override"
+      admin_notes:
+        type: string
+        example: "Approved by facility manager due to urgent member request"
+    required:
+    - status
+    - force_reason
     type: object
 
   # Plant Slot Management Definitions

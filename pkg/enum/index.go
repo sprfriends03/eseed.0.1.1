@@ -94,6 +94,12 @@ const (
 	PermissionPlantManage  Permission = "plant_manage"  // Admin-level
 	PermissionPlantCare    Permission = "plant_care"    // Record care activities
 	PermissionPlantHarvest Permission = "plant_harvest" // Harvest management
+
+	// Harvest Management Permissions
+	PermissionHarvestView    Permission = "harvest_view"    // View own harvests
+	PermissionHarvestUpdate  Permission = "harvest_update"  // Update harvest status/images
+	PermissionHarvestCollect Permission = "harvest_collect" // Collect ready harvests
+	PermissionHarvestManage  Permission = "harvest_manage"  // Admin harvest management
 )
 
 func PermissionTenantValues() []Permission {
@@ -148,6 +154,12 @@ func PermissionTenantValues() []Permission {
 		PermissionPlantManage,
 		PermissionPlantCare,
 		PermissionPlantHarvest,
+
+		// Harvest Management Permissions
+		PermissionHarvestView,
+		PermissionHarvestUpdate,
+		PermissionHarvestCollect,
+		PermissionHarvestManage,
 	}
 	return gopkg.UniqueFunc(slices.Sorted(slices.Values(permissions)), func(e Permission) Permission { return e })
 }
@@ -208,6 +220,12 @@ func PermissionRootValues() []Permission {
 		PermissionPlantManage,
 		PermissionPlantCare,
 		PermissionPlantHarvest,
+
+		// Harvest Management Permissions
+		PermissionHarvestView,
+		PermissionHarvestUpdate,
+		PermissionHarvestCollect,
+		PermissionHarvestManage,
 	}
 	return gopkg.UniqueFunc(slices.Sorted(slices.Values(permissions)), func(e Permission) Permission { return e })
 }
