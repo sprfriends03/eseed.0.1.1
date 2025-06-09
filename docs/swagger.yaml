@@ -233,6 +233,110 @@ definitions:
     - show_phone
     - show_profile_picture
     type: object
+  db.PurchaseMembershipRequest:
+    properties:
+      membership_type:
+        type: string
+        example: "premium"
+        enum: [basic, premium, vip]
+      auto_renew:
+        type: boolean
+        example: false
+    required:
+    - membership_type
+    type: object
+  db.RenewMembershipRequest:
+    properties:
+      membership_type:
+        type: string
+        example: "vip"
+        enum: [basic, premium, vip]
+    required:
+    - membership_type
+    type: object
+  db.UpdateMembershipStatusRequest:
+    properties:
+      status:
+        type: string
+        example: "suspended"
+        enum: [pending_payment, active, expired, canceled, suspended]
+      reason:
+        type: string
+        example: "Payment dispute"
+    required:
+    - status
+    type: object
+  db.MembershipDto:
+    properties:
+      id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4617"
+      member_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4618"
+      membership_type:
+        type: string
+        example: "premium"
+        enum: [basic, premium, vip]
+      start_date:
+        type: string
+        format: date-time
+        example: "2023-12-01T10:30:00Z"
+      expiration_date:
+        type: string
+        format: date-time
+        example: "2024-12-01T10:30:00Z"
+      status:
+        type: string
+        example: "active"
+        enum: [pending_payment, active, expired, canceled, suspended]
+      allocated_slots:
+        type: integer
+        example: 5
+      used_slots:
+        type: integer
+        example: 2
+      payment_amount:
+        type: number
+        format: float
+        example: 99.99
+      payment_status:
+        type: string
+        example: "paid"
+      auto_renew:
+        type: boolean
+        example: false
+      days_remaining:
+        type: integer
+        example: 325
+    type: object
+  db.MembershipExpiringDto:
+    properties:
+      id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4617"
+      member_id:
+        type: string
+        example: "654db9eca1f1b1bdbf3d4618"
+      member_email:
+        type: string
+        example: "member@example.com"
+      membership_type:
+        type: string
+        example: "premium"
+        enum: [basic, premium, vip]
+      expiration_date:
+        type: string
+        format: date-time
+        example: "2023-12-15T10:30:00Z"
+      days_until_expiration:
+        type: integer
+        example: 14
+      status:
+        type: string
+        example: "active"
+        enum: [pending_payment, active, expired, canceled, suspended]
+    type: object
   db.RoleCmsData:
     properties:
       data_status:
@@ -1672,6 +1776,323 @@ paths:
       summary: Download KYC Document (Admin)
       tags:
       - KYC Admin
+  /membership/v1/purchase:
+    post:
+      parameters:
+      - description: Membership purchase request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.PurchaseMembershipRequest'
+      responses:
+        "201":
+          description: Membership purchased successfully
+          schema:
+            properties:
+              message:
+                type: string
+                example: "Membership purchased successfully"
+              membership:
+                $ref: '#/definitions/db.MembershipDto'
+              member_type:
+                type: string
+                example: "premium"
+            type: object
+        "400":
+          description: Bad Request - Invalid membership type or request format
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - KYC verification required
+        "409":
+          description: Conflict - Member already has active membership
+      security:
+      - BearerAuth: []
+      summary: Purchase Membership
+      tags:
+      - Membership
+  /membership/v1/status:
+    get:
+      responses:
+        "200":
+          description: Current membership status and details
+          schema:
+            properties:
+              membership:
+                $ref: '#/definitions/db.MembershipDto'
+            type: object
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "404":
+          description: No active membership found
+      security:
+      - BearerAuth: []
+      summary: Get Membership Status
+      tags:
+      - Membership
+  /membership/v1/renew:
+    post:
+      parameters:
+      - description: Membership renewal request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.RenewMembershipRequest'
+      responses:
+        "200":
+          description: Membership renewed successfully
+          schema:
+            properties:
+              message:
+                type: string
+                example: "Membership renewed successfully"
+              new_expiration:
+                type: string
+                format: date-time
+                example: "2025-12-01T10:30:00Z"
+              membership_type:
+                type: string
+                example: "vip"
+              allocated_slots:
+                type: integer
+                example: 10
+            type: object
+        "400":
+          description: Bad Request - Invalid membership type
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "404":
+          description: No membership found to renew
+      security:
+      - BearerAuth: []
+      summary: Renew Membership
+      tags:
+      - Membership
+  /membership/v1/history:
+    get:
+      responses:
+        "200":
+          description: Complete membership transaction history
+          schema:
+            properties:
+              memberships:
+                type: array
+                items:
+                  $ref: '#/definitions/db.MembershipDto'
+              total:
+                type: integer
+                example: 2
+            type: object
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get Membership History
+      tags:
+      - Membership
+  /membership/v1/{id}:
+    delete:
+      parameters:
+      - description: Membership ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Membership canceled successfully
+          schema:
+            properties:
+              message:
+                type: string
+                example: "Membership canceled successfully"
+            type: object
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Not authorized to cancel this membership
+        "404":
+          description: Membership not found
+      security:
+      - BearerAuth: []
+      summary: Cancel Membership
+      tags:
+      - Membership
+  /membership/v1/admin/pending:
+    get:
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      responses:
+        "200":
+          description: List of memberships awaiting payment
+          schema:
+            properties:
+              memberships:
+                type: array
+                items:
+                  $ref: '#/definitions/db.MembershipDto'
+              total:
+                type: integer
+                example: 0
+              page:
+                type: integer
+                example: 1
+              limit:
+                type: integer
+                example: 20
+            type: object
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Insufficient permissions
+      security:
+      - BearerAuth: []
+      summary: Get Pending Memberships (Admin)
+      tags:
+      - Membership Admin
+  /membership/v1/admin/expiring:
+    get:
+      parameters:
+      - default: 30
+        description: Days threshold for expiration
+        in: query
+        minimum: 1
+        name: days
+        type: integer
+      responses:
+        "200":
+          description: List of memberships expiring soon
+          schema:
+            properties:
+              memberships:
+                type: array
+                items:
+                  $ref: '#/definitions/db.MembershipExpiringDto'
+              total:
+                type: integer
+                example: 1
+              days_threshold:
+                type: integer
+                example: 30
+            type: object
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Insufficient permissions
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get Expiring Memberships (Admin)
+      tags:
+      - Membership Admin
+  /membership/v1/admin/{id}/status:
+    put:
+      parameters:
+      - description: Membership ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status update request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/db.UpdateMembershipStatusRequest'
+      responses:
+        "200":
+          description: Membership status updated successfully
+          schema:
+            properties:
+              message:
+                type: string
+                example: "Membership status updated successfully"
+              membership_id:
+                type: string
+                example: "654db9eca1f1b1bdbf3d4617"
+              new_status:
+                type: string
+                example: "suspended"
+            type: object
+        "400":
+          description: Bad Request - Invalid status or request format
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Insufficient permissions
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Update Membership Status (Admin)
+      tags:
+      - Membership Admin
+  /membership/v1/admin/analytics:
+    get:
+      responses:
+        "200":
+          description: Basic membership analytics and statistics
+          schema:
+            properties:
+              total_memberships:
+                type: integer
+                example: 150
+              active_memberships:
+                type: integer
+                example: 125
+              membership_by_tier:
+                type: object
+                properties:
+                  basic:
+                    type: integer
+                    example: 45
+                  premium:
+                    type: integer
+                    example: 60
+                  vip:
+                    type: integer
+                    example: 20
+              revenue:
+                type: object
+                properties:
+                  total_revenue:
+                    type: number
+                    format: float
+                    example: 12499.75
+                  monthly_recurring:
+                    type: number
+                    format: float
+                    example: 2134.95
+              expiring_soon:
+                type: integer
+                example: 12
+            type: object
+        "401":
+          description: Unauthorized - Invalid or expired token
+        "403":
+          description: Forbidden - Insufficient permissions
+      security:
+      - BearerAuth: []
+      summary: Get Membership Analytics (Admin)
+      tags:
+      - Membership Admin
 securityDefinitions:
   BasicAuth:
     type: basic
